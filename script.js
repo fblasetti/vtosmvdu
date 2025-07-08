@@ -1,3 +1,5 @@
+console.log('JS cargado');
+
 const sheetURL = "https://docs.google.com/spreadsheets/d/1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64/gviz/tq?tqx=out:json";
 
 const empresaSelect = document.getElementById("empresa");
