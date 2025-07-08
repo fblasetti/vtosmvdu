@@ -1,5 +1,3 @@
-console.log('JS cargado');
-
 const sheetURL = "https://docs.google.com/spreadsheets/d/1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64/gviz/tq?tqx=out:json";
 
 const empresaSelect = document.getElementById("empresa");
@@ -12,6 +10,8 @@ const tablaBody = document.getElementById("tabla-vencimientos");
 const overlay = document.getElementById("overlay");
 const popup = document.getElementById("popup");
 const popupTexto = document.getElementById("popup-texto");
+
+console.log('JS cargado');
 
 function cargarMeses() {
   const hoy = new Date();
@@ -28,13 +28,22 @@ function cargarMeses() {
 cargarMeses();
 
 verBtn.onclick = () => {
+  console.log("Click en OK");
   fetch(sheetURL)
     .then(res => res.text())
     .then(text => {
-      const json = JSON.parse(text.substr(47).slice(0, -2));
-      const filas = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
-      mostrarFilas(filas);
-    });
+      console.log('Texto recibido:', text.slice(0, 400)); // Muestra parte del texto JSON
+      try {
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+        const filas = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
+        console.log('Filas procesadas:', filas);
+        mostrarFilas(filas);
+      } catch (e) {
+        console.error('Error al parsear JSON:', e);
+        console.log('Texto crudo:', text);
+      }
+    })
+    .catch(e => console.error('Error en fetch:', e));
 };
 
 function mostrarFilas(data) {
@@ -112,16 +121,4 @@ window.abrirPopup = function(texto) {
 window.cerrarPopup = function() {
   popup.style.display = "none";
   overlay.style.display = "none";
-};
-verBtn.onclick = () => {
-  fetch(sheetURL)
-    .then(res => res.text())
-    .then(text => {
-      console.log('Texto recibido:', text.slice(0, 200)); // Ver los primeros caracteres del texto recibido
-      const json = JSON.parse(text.substr(47).slice(0, -2));
-      const filas = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
-      console.log('Filas procesadas:', filas); // Ver array de filas procesadas
-      mostrarFilas(filas);
-    })
-    .catch(e => console.error('Error en fetch:', e));
 };
