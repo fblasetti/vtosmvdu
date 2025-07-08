@@ -35,18 +35,10 @@ verBtn.onclick = () => {
       console.log('Texto recibido:', text.slice(0, 400)); // Muestra parte del texto JSON
       try {
         const json = JSON.parse(text.substr(47).slice(0, -2));
-        let filas = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
+        const filas = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
         console.log('Filas procesadas:', filas);
-
-        // OMITIR PRIMERA FILA SI ES CABECERA
-        if (filas.length > 0 && filas[0][0] === "Empresa") filas = filas.slice(1);
-
-        // Mostrar cada fila para depuración
-        filas.forEach((fila, idx) => {
-          console.log(`Fila ${idx}:`, fila);
-        });
-
         mostrarFilas(filas);
+        if ((fila[10] || "").trim().toLowerCase() !== (medio || "").trim().toLowerCase()) return;
       } catch (e) {
         console.error('Error al parsear JSON:', e);
         console.log('Texto crudo:', text);
@@ -62,6 +54,7 @@ function mostrarFilas(data) {
   const medio = medioSelect.value;
   const mes = mesSelect.value;
 
+  // Indices de columnas (ajustar si cambia la estructura del Google Sheet):
   // 0: Empresa, 1: Fecha Emisión, 2: Motivo, 3: Proveedor, 4: Importe, 5: Forma de Pago, 6: Fecha Tentativa, 7: Fecha Real, 8: Estado, 9: Detalle, 10: Medio de Pago
 
   data.forEach((fila, idx) => {
