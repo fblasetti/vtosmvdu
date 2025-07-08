@@ -12,7 +12,7 @@ const popup = document.getElementById("popup");
 const popupTexto = document.getElementById("popup-texto");
 
 function cargarMeses() {
-  mesSelect.innerHTML = ""; // Limpia el select antes de llenarlo
+  mesSelect.innerHTML = "";
   const hoy = new Date();
   for (let i = 0; i < 6; i++) {
     const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
@@ -154,6 +154,7 @@ function mostrarFilas(data) {
     tablaBody.appendChild(trDetalles);
   });
 
+  // ¡AQUÍ actualiza SIEMPRE el Total a pagar!
   totalSpan.textContent = total.toLocaleString();
   resultadoDiv.style.display = "block";
 }
