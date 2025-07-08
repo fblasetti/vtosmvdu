@@ -1,138 +1,123 @@
 body {
-  background: #111; /* Fondo negro */
-  min-height: 100vh;
-  margin: 0;
+  background: black;
   font-family: Arial, sans-serif;
-}
-
-/* Caja central blanca y redondeada */
-.contenedor {
-  background: #fff;
-  border-radius: 16px;
-  margin: 32px auto;
-  box-shadow: 0 2px 16px 2px rgba(0,0,0,0.2);
-  padding: 32px 24px 24px 24px;
-  width: 100%;
-  max-width: 420px;
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-/* Responsive: achica padding y margen en celulares */
-@media (max-width: 600px) {
-  .contenedor {
-    margin: 16px auto;
-    padding: 16px 4vw 16px 4vw;
-    max-width: 96vw; /* Siempre deja un margen */
-    min-width: unset;
-  }
-}
-
-/* Títulos */
-h2, h3, h4 {
+  color: white;
+  margin: 0;
+  padding: 0;
   text-align: center;
-  margin: 0 0 16px 0;
-  font-weight: bold;
 }
-
-/* Etiquetas y selects */
-label {
-  font-weight: bold;
-  margin-bottom: 2px;
-  display: block;
+.container {
+  max-width: 1000px;
+  margin: 50px auto;
+  background: white;
+  color: black;
+  padding: 30px;
+  border-radius: 20px;
 }
-
-select, input, button {
-  font-size: 1rem;
-  width: 100%;
-  margin: 8px 0;
-  padding: 10px 8px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-  background: #fafafa;
-}
-
-/* Botón OK más grande y destacado */
-#ver-btn {
-  background: #eee;
-  font-weight: bold;
-  transition: background 0.2s;
-  cursor: pointer;
-  border: none;
-  margin-top: 12px;
-}
-#ver-btn:hover {
-  background: #c5f7c0;
-}
-
-/* Total a pagar */
-#total {
-  font-weight: bold;
-  font-size: 1.15rem;
-  color: #111;
-}
-
-/* Responsive para la tabla */
-#resultado {
-  margin-top: 18px;
-  overflow-x: auto;
+select, button {
+  margin: 10px;
+  padding: 10px;
+  font-size: 16px;
 }
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 8px;
-  font-size: 1rem;
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
+  margin-top: 20px;
 }
 th, td {
-  border: 1px solid #aaa;
-  padding: 6px 4px;
+  border: 1px solid #ccc;
+  padding: 8px;
   text-align: center;
-  background: #fff;
 }
 .detalles {
   display: none;
-  background: #f8f8f8;
+  background: #f7f7f7;
 }
 .detalles.visible {
   display: table-row;
 }
-
-/* Fila pagada (verde claro) */
-tr[style*="background-color: #c5f7c0"] td {
-  background: #c5f7c0 !important;
+button.detalle-btn, button.info-btn {
+  background: #00ffae;
+  color: black;
+  border-radius: 6px;
+  border: none;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
 }
-
-/* Responsive tabla */
-@media (max-width: 480px) {
+#popup {
+  display: none;
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  color: black;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px black;
+  z-index: 10;
+}
+#overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 5;
+}
+/* Responsive design para pantallas chicas */
+@media (max-width: 900px) {
+  .container {
+    max-width: 98vw;
+    padding: 10px;
+    border-radius: 10px;
+  }
+  .filtros {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  select, button {
+    font-size: 15px;
+    padding: 10px 5px;
+    margin: 6px 0;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  table {
+    font-size: 13px;
+  }
   th, td {
-    font-size: 0.93rem;
-    padding: 4px 2px;
+    padding: 6px 2px;
   }
 }
 
-/* Popup y overlay */
-#overlay {
-  position: fixed; left:0; top:0; right:0; bottom:0;
-  background: rgba(0,0,0,0.4);
-  z-index: 20;
-  display: none;
-}
-#popup {
-  position: fixed;
-  z-index: 21;
-  background: #fff;
-  border-radius: 10px;
-  max-width: 94vw;
-  min-width: 220px;
-  padding: 22px 18px;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 6px 28px 4px rgba(0,0,0,0.15);
-  display: none;
+/* Responsive para móviles aún más chicos */
+@media (max-width: 600px) {
+  .container {
+    margin: 10px auto;
+    padding: 5px;
+  }
+  h2, h3 {
+    font-size: 18px;
+  }
+  table, .tabla-container {
+    width: 100vw;
+    min-width: 0;
+    margin: 0;
+    border-radius: 0;
+    padding: 0;
+  }
+  th, td {
+    font-size: 11px;
+    padding: 4px 1px;
+  }
+  #popup {
+    width: 90vw;
+    max-width: 320px;
+    padding: 10px;
+    font-size: 15px;
+  }
 }
