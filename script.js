@@ -11,10 +11,8 @@ const overlay = document.getElementById("overlay");
 const popup = document.getElementById("popup");
 const popupTexto = document.getElementById("popup-texto");
 
-console.log('JS cargado');
-
 function cargarMeses() {
-  mesSelect.innerHTML = ""; // Limpia el select antes de llenarlo
+  mesSelect.innerHTML = "";
   const hoy = new Date();
   for (let i = 0; i < 6; i++) {
     const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
@@ -29,7 +27,6 @@ function cargarMeses() {
 cargarMeses();
 
 verBtn.onclick = () => {
-  console.log("Click en OK");
   fetch(sheetURL)
     .then(res => res.text())
     .then(text => {
@@ -38,28 +35,42 @@ verBtn.onclick = () => {
         let filas = json.table.rows.map(row =>
           row.c.map(cell => (cell && typeof cell.v !== "undefined") ? cell.v : "")
         );
-        filas.forEach(function(fila, idx) {
-          // Puedes descomentar para depuración:
-          // console.log(`Fila ${idx}:`, fila);
-        });
-
         mostrarFilas(filas);
       } catch (e) {
         console.error('Error al parsear JSON:', e);
-        console.log('Texto crudo:', text);
       }
     })
     .catch(e => console.error('Error en fetch:', e));
 };
 
-function extraerFechaTentativa(fila) {
-  // Google devuelve fechas como objetos Date(2025,6,8) -> mes base 0 (julio es 6)
+function extraerFechaTentativaCompleta(fila) {
   let fecha = fila[6];
   if (typeof fecha === "string" && fecha.startsWith("Date(")) {
     const partes = fecha.match(/Date\((\d+),(\d+),(\d+)\)/);
     if (partes) {
       const anio = parseInt(partes[1], 10);
-      const mes = parseInt(partes[2], 10) + 1; // Sumar 1 porque Google cuenta meses desde 0
+      const mes = parseInt(partes[2], 10);
+      const dia = parseInt(partes[3], 10);
+      return new Date(anio, mes, dia);
+    }
+  }
+  if (typeof fecha === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return new Date(fecha);
+  }
+  if (typeof fecha === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+    const partes = fecha.split("/");
+    return new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+  }
+  return null;
+}
+
+function extraerFechaTentativa(fila) {
+  let fecha = fila[6];
+  if (typeof fecha === "string" && fecha.startsWith("Date(")) {
+    const partes = fecha.match(/Date\((\d+),(\d+),(\d+)\)/);
+    if (partes) {
+      const anio = parseInt(partes[1], 10);
+      const mes = parseInt(partes[2], 10) + 1;
       return `${anio}-${String(mes).padStart(2, '0')}`;
     }
   }
@@ -83,9 +94,26 @@ function mostrarFilas(data) {
     const fechaStr = extraerFechaTentativa(fila);
     if (fechaStr !== mes) return;
 
-    const pagado = (fila[8] || "").toLowerCase().includes("pagado");
+    const estado = (fila[8] || "").toLowerCase();
+    const pagado = estado.includes("pagado");
+    let claseColor = "";
 
-    // No sumamos "Pagado" al total, pero sí lo mostramos en la tabla
+    if (pagado) {
+      claseColor = "fila-pagado";
+    } else {
+      // Amarillo si faltan 5 días o menos para el vencimiento
+      const fechaTentativa = extraerFechaTentativaCompleta(fila);
+      if (fechaTentativa instanceof Date && !isNaN(fechaTentativa)) {
+        const hoy = new Date();
+        hoy.setHours(0,0,0,0);
+        const diffDias = Math.ceil((fechaTentativa - hoy) / (1000 * 60 * 60 * 24));
+        if (diffDias >= 0 && diffDias <= 5) {
+          claseColor = "fila-amarilla";
+        }
+      }
+    }
+
+    // Sumar solo si NO es pagado
     if (!pagado) {
       const importe = parseFloat((fila[4] || "0").toString().replace(/[^0-9.-]+/g,"")) || 0;
       total += importe;
@@ -93,7 +121,7 @@ function mostrarFilas(data) {
     const importe = parseFloat((fila[4] || "0").toString().replace(/[^0-9.-]+/g,"")) || 0;
 
     const tr = document.createElement("tr");
-    if (pagado) tr.style.backgroundColor = "#c5f7c0"; // Verde claro para pagado
+    if (claseColor) tr.classList.add(claseColor);
     tr.innerHTML = `
       <td>${fila[1] ? (typeof fila[1] === "string" && fila[1].startsWith("Date(") ? formatearFecha(fila[1]) : fila[1]) : "-"}</td>
       <td>${fila[10] || "-"}</td>
@@ -111,7 +139,7 @@ function mostrarFilas(data) {
     const trDetalles = document.createElement("tr");
     trDetalles.className = "detalles";
     trDetalles.id = `detalles-${idx}`;
-    if (pagado) trDetalles.style.backgroundColor = "#c5f7c0";
+    if (claseColor) trDetalles.classList.add(claseColor);
     trDetalles.innerHTML = `
       <td colspan="5" style="text-align:left">
         <strong>Motivo:</strong> ${fila[2] || "-"}<br>
