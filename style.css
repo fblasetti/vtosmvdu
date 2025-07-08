@@ -66,3 +66,59 @@ button.detalle-btn, button.info-btn {
   background: rgba(0,0,0,0.6);
   z-index: 5;
 }
+/* Responsive design para pantallas chicas */
+@media (max-width: 900px) {
+  .container {
+    max-width: 98vw;
+    padding: 10px;
+    border-radius: 10px;
+  }
+  .filtros {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  select, button {
+    font-size: 15px;
+    padding: 10px 5px;
+    margin: 6px 0;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  table {
+    font-size: 13px;
+  }
+  th, td {
+    padding: 6px 2px;
+  }
+}
+
+/* Responsive para móviles aún más chicos */
+@media (max-width: 600px) {
+  .container {
+    margin: 10px auto;
+    padding: 5px;
+  }
+  h2, h3 {
+    font-size: 18px;
+  }
+  table, .tabla-container {
+    width: 100vw;
+    min-width: 0;
+    margin: 0;
+    border-radius: 0;
+    padding: 0;
+  }
+  th, td {
+    font-size: 11px;
+    padding: 4px 1px;
+  }
+  #popup {
+    width: 90vw;
+    max-width: 320px;
+    padding: 10px;
+    font-size: 15px;
+  }
+}
+
