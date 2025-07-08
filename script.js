@@ -11,10 +11,8 @@ const overlay = document.getElementById("overlay");
 const popup = document.getElementById("popup");
 const popupTexto = document.getElementById("popup-texto");
 
-console.log('JS cargado');
-
 function cargarMeses() {
-  mesSelect.innerHTML = "";
+  mesSelect.innerHTML = ""; // Limpia el select antes de llenarlo
   const hoy = new Date();
   for (let i = 0; i < 6; i++) {
     const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
@@ -40,20 +38,18 @@ verBtn.onclick = () => {
         mostrarFilas(filas);
       } catch (e) {
         console.error('Error al parsear JSON:', e);
-        console.log('Texto crudo:', text);
       }
     })
     .catch(e => console.error('Error en fetch:', e));
 };
 
 function extraerFechaTentativaCompleta(fila) {
-  // Devuelve un objeto Date real si es posible, o null
   let fecha = fila[6];
   if (typeof fecha === "string" && fecha.startsWith("Date(")) {
     const partes = fecha.match(/Date\((\d+),(\d+),(\d+)\)/);
     if (partes) {
       const anio = parseInt(partes[1], 10);
-      const mes = parseInt(partes[2], 10); // mes base 0
+      const mes = parseInt(partes[2], 10);
       const dia = parseInt(partes[3], 10);
       return new Date(anio, mes, dia);
     }
@@ -62,7 +58,6 @@ function extraerFechaTentativaCompleta(fila) {
     return new Date(fecha);
   }
   if (typeof fecha === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
-    // dd/mm/yyyy
     const partes = fecha.split("/");
     return new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
   }
@@ -99,24 +94,27 @@ function mostrarFilas(data) {
     const fechaStr = extraerFechaTentativa(fila);
     if (fechaStr !== mes) return;
 
-    const pagado = (fila[8] || "").toLowerCase().includes("pagado");
-
-    // --- MARCAR AMARILLO SI VENCE EN MENOS DE 5 DÍAS Y NO ES PAGADO ---
+    const estado = (fila[8] || "").toLowerCase();
+    const pagado = estado.includes("pagado");
     let colorFondo = "";
-    if (!pagado) {
+
+    // 1. VERDE si pagado
+    if (pagado) {
+      colorFondo = "#c5f7c0";
+    } else {
+      // 2. AMARILLO si faltan 5 días o menos para el vencimiento
       const fechaTentativa = extraerFechaTentativaCompleta(fila);
       if (fechaTentativa instanceof Date && !isNaN(fechaTentativa)) {
         const hoy = new Date();
         hoy.setHours(0,0,0,0);
         const diffDias = Math.ceil((fechaTentativa - hoy) / (1000 * 60 * 60 * 24));
         if (diffDias >= 0 && diffDias <= 5) {
-          colorFondo = "#fffcb2"; // amarillo claro
+          colorFondo = "#fffcb2";
         }
       }
     }
-    if (pagado) colorFondo = "#c5f7c0"; // verde claro para pagados
 
-    // No sumamos "Pagado" al total, pero sí lo mostramos en la tabla
+    // Sumar solo si NO es pagado
     if (!pagado) {
       const importe = parseFloat((fila[4] || "0").toString().replace(/[^0-9.-]+/g,"")) || 0;
       total += importe;
