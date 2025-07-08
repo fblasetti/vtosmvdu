@@ -1,0 +1,68 @@
+body {
+  background: black;
+  font-family: Arial, sans-serif;
+  color: white;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+.container {
+  max-width: 1000px;
+  margin: 50px auto;
+  background: white;
+  color: black;
+  padding: 30px;
+  border-radius: 20px;
+}
+select, button {
+  margin: 10px;
+  padding: 10px;
+  font-size: 16px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+.detalles {
+  display: none;
+  background: #f7f7f7;
+}
+.detalles.visible {
+  display: table-row;
+}
+button.detalle-btn, button.info-btn {
+  background: #00ffae;
+  color: black;
+  border-radius: 6px;
+  border: none;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#popup {
+  display: none;
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  color: black;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px black;
+  z-index: 10;
+}
+#overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 5;
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vencimientos</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Consulta de Vencimientos</h2>
+    <div class="filtros">
+      <label>Empresa:</label>
+      <select id="empresa">
+        <option disabled selected>Seleccione empresa</option>
+        <option value="Mesa Verde SRL">Mesa Verde SRL</option>
+        <option value="Dumas">Dumas</option>
+      </select>
+      <label>Medio de Pago:</label>
+      <select id="medio">
+        <option disabled selected>Seleccione medio</option>
+        <option value="Banco Santander">Banco Santander</option>
+        <option value="Banco Galicia">Banco Galicia</option>
+        <option value="Banco Nación">Banco Nación</option>
+        <option value="Efectivo">Efectivo</option>
+      </select>
+      <label>Mes:</label>
+      <select id="mes"></select>
+      <button id="ver-btn">¡OK!</button>
+    </div>
+    <div id="resultado" style="display:none;">
+      <h3>Total a pagar: $<span id="total"></span></h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha Emisión</th>
+            <th>Banco</th>
+            <th>Importe</th>
+            <th>+ Detalles</th>
+            <th>+Info</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-vencimientos"></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="overlay" onclick="cerrarPopup()"></div>
+  <div id="popup">
+    <p id="popup-texto"></p>
+    <button onclick="cerrarPopup()">Cerrar</button>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
