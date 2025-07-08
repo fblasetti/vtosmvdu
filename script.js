@@ -32,13 +32,16 @@ verBtn.onclick = () => {
   fetch(sheetURL)
     .then(res => res.text())
     .then(text => {
-      console.log('Texto recibido:', text.slice(0, 400)); // Muestra parte del texto JSON
       try {
         const json = JSON.parse(text.substr(47).slice(0, -2));
-        const filas = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
-        console.log('Filas procesadas:', filas);
+        let filas = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
+        if (filas.length > 0 && filas[0][0] === "Mesa Verde SRL") filas = filas.slice(1);
+
+        filas.forEach((fila, idx) => {
+          console.log(`Fila ${idx}:`, fila);
+        });
+
         mostrarFilas(filas);
-        if ((fila[10] || "").trim().toLowerCase() !== (medio || "").trim().toLowerCase()) return;
       } catch (e) {
         console.error('Error al parsear JSON:', e);
         console.log('Texto crudo:', text);
@@ -47,33 +50,50 @@ verBtn.onclick = () => {
     .catch(e => console.error('Error en fetch:', e));
 };
 
+function extraerFechaTentativa(fila) {
+  // Google devuelve fechas como objetos Date(2025,6,8) -> mes base 0 (julio es 6)
+  let fecha = fila[6];
+  if (typeof fecha === "string" && fecha.startsWith("Date(")) {
+    const partes = fecha.match(/Date\((\d+),(\d+),(\d+)\)/);
+    if (partes) {
+      const anio = parseInt(partes[1], 10);
+      const mes = parseInt(partes[2], 10) + 1; // Sumar 1 porque Google cuenta meses desde 0
+      return `${anio}-${String(mes).padStart(2, '0')}`;
+    }
+  }
+  // Si ya está en formato yyyy-mm-dd
+  if (typeof fecha === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return fecha.substr(0,7);
+  }
+  return "";
+}
+
 function mostrarFilas(data) {
   tablaBody.innerHTML = "";
   let total = 0;
-  const empresa = empresaSelect.value;
-  const medio = medioSelect.value;
+  const empresa = empresaSelect.value.trim().toLowerCase();
+  const medio = medioSelect.value.trim().toLowerCase();
   const mes = mesSelect.value;
 
-  // Indices de columnas (ajustar si cambia la estructura del Google Sheet):
-  // 0: Empresa, 1: Fecha Emisión, 2: Motivo, 3: Proveedor, 4: Importe, 5: Forma de Pago, 6: Fecha Tentativa, 7: Fecha Real, 8: Estado, 9: Detalle, 10: Medio de Pago
-
   data.forEach((fila, idx) => {
-    if (fila[0] !== empresa) return;
-    if (fila[10] !== medio) return;
-    if (!fila[6]) return;
+    // Filtro por empresa (ignorando mayúsculas/minúsculas y espacios)
+    if ((fila[0] || "").trim().toLowerCase() !== empresa) return;
+    // Filtro por medio de pago (ignorando mayúsculas/minúsculas y espacios)
+    if ((fila[10] || "").trim().toLowerCase() !== medio) return;
 
-    const fechaTentativa = new Date(fila[6]);
-    const fechaStr = `${fechaTentativa.getFullYear()}-${String(fechaTentativa.getMonth() + 1).padStart(2, '0')}`;
+    // Procesar fecha tentativa
+    const fechaStr = extraerFechaTentativa(fila);
     if (fechaStr !== mes) return;
 
-    if ((fila[8] || "").toLowerCase().includes("pagado")) return; // Excluir "Pagado"
+    // Excluir "Pagado"
+    if ((fila[8] || "").toLowerCase().includes("pagado")) return;
 
     const importe = parseFloat((fila[4] || "0").toString().replace(/[^0-9.-]+/g,"")) || 0;
     total += importe;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${fila[1] || "-"}</td>
+      <td>${fila[1] ? (typeof fila[1] === "string" && fila[1].startsWith("Date(") ? formatearFecha(fila[1]) : fila[1]) : "-"}</td>
       <td>${fila[10] || "-"}</td>
       <td>$${importe.toLocaleString()}</td>
       <td>
@@ -95,7 +115,7 @@ function mostrarFilas(data) {
         <strong>Proveedor:</strong> ${fila[3] || "-"}<br>
         <strong>Importe:</strong> $${importe.toLocaleString()}<br>
         <strong>Forma de Pago:</strong> ${fila[5] || "-"}<br>
-        <strong>Fecha Tentativa:</strong> ${fila[6] || "-"}<br>
+        <strong>Fecha Tentativa:</strong> ${fila[6] ? (typeof fila[6] === "string" && fila[6].startsWith("Date(") ? formatearFecha(fila[6]) : fila[6]) : "-"}<br>
         <strong>Estado:</strong> ${fila[8] || "-"}
       </td>
     `;
@@ -104,6 +124,19 @@ function mostrarFilas(data) {
 
   totalSpan.textContent = total.toLocaleString();
   resultadoDiv.style.display = "block";
+}
+
+// Función para mostrar fechas legibles
+function formatearFecha(str) {
+  // Convierte "Date(2025,6,8)" a "08/07/2025"
+  const m = str.match(/Date\((\d+),(\d+),(\d+)\)/);
+  if (m) {
+    const anio = m[1];
+    const mes = String(parseInt(m[2],10)+1).padStart(2,'0');
+    const dia = String(parseInt(m[3],10)).padStart(2,'0');
+    return `${dia}/${mes}/${anio}`;
+  }
+  return str;
 }
 
 // Para mostrar/ocultar detalles
