@@ -1,41 +1,46 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Vencimientos</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consulta de Vencimientos</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
+  <div class="contenedor">
     <h2>Consulta de Vencimientos</h2>
-    <div class="filtros">
-      <label>Empresa:</label>
+    <div>
+      <label for="empresa">Empresa:</label>
       <select id="empresa">
-        <option disabled selected>Seleccione empresa</option>
         <option value="Mesa Verde SRL">Mesa Verde SRL</option>
         <option value="Dumas">Dumas</option>
       </select>
-      <label>Medio de Pago:</label>
+
+      <label for="medio">Medio de Pago:</label>
       <select id="medio">
-        <option disabled selected>Seleccione medio</option>
         <option value="Banco Santander">Banco Santander</option>
         <option value="Banco Galicia">Banco Galicia</option>
-        <option value="Banco Nación">Banco Nación</option>
+        <option value="Banco Nacion">Banco Nacion</option>
         <option value="Efectivo">Efectivo</option>
       </select>
-      <label>Mes:</label>
+
+      <label for="mes">Mes:</label>
       <select id="mes"></select>
+
       <button id="ver-btn">¡OK!</button>
     </div>
+
     <div id="resultado" style="display:none;">
-      <h3>Total a pagar: $<span id="total"></span></h3>
+      <div class="total-pagar">
+        <b>Total a pagar: $<span id="total">0</span></b>
+      </div>
       <table>
         <thead>
           <tr>
             <th>Fecha Emisión</th>
-            <th>Banco</th>
+            <th>Medio de Pago</th>
             <th>Importe</th>
-            <th>+ Detalles</th>
+            <th>Detalle</th>
             <th>+Info</th>
           </tr>
         </thead>
@@ -43,10 +48,10 @@
       </table>
     </div>
   </div>
-  <div id="overlay" onclick="cerrarPopup()"></div>
+  <div id="overlay"></div>
   <div id="popup">
-    <p id="popup-texto"></p>
-    <button onclick="cerrarPopup()">Cerrar</button>
+    <div id="popup-texto"></div>
+    <button onclick="cerrarPopup()" style="margin-top: 16px;">Cerrar</button>
   </div>
   <script src="script.js"></script>
 </body>
