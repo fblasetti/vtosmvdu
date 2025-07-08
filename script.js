@@ -34,10 +34,14 @@ verBtn.onclick = () => {
     .then(text => {
       try {
         const json = JSON.parse(text.substr(47).slice(0, -2));
-        let filas = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
-        if (filas.length > 0 && filas[0][0] === "Mesa Verde SRL") filas = filas.slice(1);
-
-        filas.forEach((fila, idx) => {
+        let filas = json.table.rows.map(row =>
+          row.c.map(cell => (cell && typeof cell.v !== "undefined") ? cell.v : "")
+        );
+        if (filas.length > 0 && typeof filas[0][0] === "string" && filas[0][0].toLowerCase().includes("mesa")) {
+          filas = filas.slice(0); // Si la cabecera ya no está, no cortar
+        }
+        // Mostrar cada fila para depuración
+        filas.forEach(function(fila, idx) {
           console.log(`Fila ${idx}:`, fila);
         });
 
@@ -61,7 +65,6 @@ function extraerFechaTentativa(fila) {
       return `${anio}-${String(mes).padStart(2, '0')}`;
     }
   }
-  // Si ya está en formato yyyy-mm-dd
   if (typeof fecha === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
     return fecha.substr(0,7);
   }
@@ -75,17 +78,13 @@ function mostrarFilas(data) {
   const medio = medioSelect.value.trim().toLowerCase();
   const mes = mesSelect.value;
 
-  data.forEach((fila, idx) => {
-    // Filtro por empresa (ignorando mayúsculas/minúsculas y espacios)
+  data.forEach(function(fila, idx) {
     if ((fila[0] || "").trim().toLowerCase() !== empresa) return;
-    // Filtro por medio de pago (ignorando mayúsculas/minúsculas y espacios)
     if ((fila[10] || "").trim().toLowerCase() !== medio) return;
 
-    // Procesar fecha tentativa
     const fechaStr = extraerFechaTentativa(fila);
     if (fechaStr !== mes) return;
 
-    // Excluir "Pagado"
     if ((fila[8] || "").toLowerCase().includes("pagado")) return;
 
     const importe = parseFloat((fila[4] || "0").toString().replace(/[^0-9.-]+/g,"")) || 0;
@@ -100,7 +99,7 @@ function mostrarFilas(data) {
         <button class="detalle-btn" onclick="mostrarDetalles(${idx})">+</button>
       </td>
       <td>
-        <button class="info-btn" onclick="abrirPopup('${fila[9] ? fila[9].replace(/'/g, "\\'") : "Sin detalle"}')">+Info</button>
+        <button class="info-btn" onclick="abrirPopup('${fila[9] ? fila[9].toString().replace(/'/g, "\\'") : "Sin detalle"}')">+Info</button>
       </td>
     `;
     tablaBody.appendChild(tr);
@@ -126,9 +125,7 @@ function mostrarFilas(data) {
   resultadoDiv.style.display = "block";
 }
 
-// Función para mostrar fechas legibles
 function formatearFecha(str) {
-  // Convierte "Date(2025,6,8)" a "08/07/2025"
   const m = str.match(/Date\((\d+),(\d+),(\d+)\)/);
   if (m) {
     const anio = m[1];
@@ -139,13 +136,11 @@ function formatearFecha(str) {
   return str;
 }
 
-// Para mostrar/ocultar detalles
 window.mostrarDetalles = function(idx) {
   const fila = document.getElementById(`detalles-${idx}`);
   fila.classList.toggle("visible");
 };
 
-// Popup para detalles
 window.abrirPopup = function(texto) {
   popupTexto.innerText = texto || "Sin detalle disponible";
   popup.style.display = "block";
