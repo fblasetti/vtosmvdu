@@ -1,11 +1,10 @@
 body {
-  background: #111; /* Fondo negro */
+  background: #111;
   min-height: 100vh;
   margin: 0;
   font-family: Arial, sans-serif;
 }
 
-/* Caja central blanca y redondeada */
 .contenedor {
   background: #fff;
   border-radius: 16px;
@@ -20,24 +19,43 @@ body {
   align-items: stretch;
 }
 
-/* Responsive: achica padding y margen en celulares */
 @media (max-width: 600px) {
+  body {
+    font-size: 20px; /* Aumenta el tamaño general */
+  }
   .contenedor {
-    margin: 16px auto;
-    padding: 16px 4vw 16px 4vw;
-    max-width: 96vw; /* Siempre deja un margen */
+    margin: 10px auto;
+    padding: 18px 2vw 20px 2vw;
+    max-width: 99vw; /* O casi todo el ancho */
     min-width: unset;
+    box-shadow: 0 1px 12px 2px rgba(0,0,0,0.16);
+  }
+  select, input, button {
+    font-size: 1.15em;
+    padding: 16px 8px;
+  }
+  th, td {
+    font-size: 1.08em;
+    padding: 10px 4px;
+  }
+  #ver-btn {
+    font-size: 1.18em;
+    padding: 15px 8px;
+  }
+  #popup {
+    font-size: 1.07em;
+    padding: 18px 10px;
+    min-width: 80vw;
+    max-width: 97vw;
   }
 }
 
-/* Títulos */
 h2, h3, h4 {
   text-align: center;
   margin: 0 0 16px 0;
   font-weight: bold;
 }
 
-/* Etiquetas y selects */
 label {
   font-weight: bold;
   margin-bottom: 2px;
@@ -55,7 +73,6 @@ select, input, button {
   background: #fafafa;
 }
 
-/* Botón OK más grande y destacado */
 #ver-btn {
   background: #eee;
   font-weight: bold;
@@ -68,14 +85,12 @@ select, input, button {
   background: #c5f7c0;
 }
 
-/* Total a pagar */
 #total {
   font-weight: bold;
   font-size: 1.15rem;
   color: #111;
 }
 
-/* Responsive para la tabla */
 #resultado {
   margin-top: 18px;
   overflow-x: auto;
@@ -108,15 +123,13 @@ tr[style*="background-color: #c5f7c0"] td {
   background: #c5f7c0 !important;
 }
 
-/* Responsive tabla */
 @media (max-width: 480px) {
   th, td {
-    font-size: 0.93rem;
-    padding: 4px 2px;
+    font-size: 1.12em;
+    padding: 10px 2px;
   }
 }
 
-/* Popup y overlay */
 #overlay {
   position: fixed; left:0; top:0; right:0; bottom:0;
   background: rgba(0,0,0,0.4);
