@@ -14,6 +14,7 @@ const popupTexto = document.getElementById("popup-texto");
 console.log('JS cargado');
 
 function cargarMeses() {
+  mesSelect.innerHTML = ""; // Limpia el select antes de llenarlo
   const hoy = new Date();
   for (let i = 0; i < 6; i++) {
     const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
