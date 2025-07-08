@@ -113,3 +113,15 @@ window.cerrarPopup = function() {
   popup.style.display = "none";
   overlay.style.display = "none";
 };
+verBtn.onclick = () => {
+  fetch(sheetURL)
+    .then(res => res.text())
+    .then(text => {
+      console.log('Texto recibido:', text.slice(0, 200)); // Ver los primeros caracteres del texto recibido
+      const json = JSON.parse(text.substr(47).slice(0, -2));
+      const filas = json.table.rows.map(r => r.c.map(c => c ? c.v : ""));
+      console.log('Filas procesadas:', filas); // Ver array de filas procesadas
+      mostrarFilas(filas);
+    })
+    .catch(e => console.error('Error en fetch:', e));
+};
