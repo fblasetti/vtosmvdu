@@ -1,38 +1,31 @@
-// CONFIGURACIÓN DE TU CSV PUBLICADO DESDE GOOGLE SHEETS
+// CONFIGURA tu URL de Google Sheets CSV exportado aquí:
 const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1v6N1P9XarWJJcfDqMfRPqj6A2B4zQXw0iwmu7wK1ZFkfTGstbHDydnkuU-pyeYhKf3p3OPZyduK5/pub?gid=0&single=true&output=csv";
 
-// Selección de elementos
+// Elementos
 const empresaSel = document.getElementById('empresa');
 const bancoSel = document.getElementById('banco');
 const mesSel = document.getElementById('mes');
 const tablaCuerpo = document.getElementById('tablaCuerpo');
 const totalAPagar = document.getElementById('totalAPagar');
 const fechaActualizacionElem = document.getElementById('fechaActualizacion');
-
-// Modal
 const modal = document.getElementById('modalInfo');
 const cerrarModal = document.getElementById('cerrarModal');
 const contenidoModal = document.getElementById('contenidoModal');
 
-// VARIABLES DE DATOS
 let datos = [];
 let empresas = [];
 let bancos = [];
 let meses = [];
 
-// Cargar CSV y preparar
 window.addEventListener('DOMContentLoaded', cargarDatos);
 
 async function cargarDatos() {
     try {
-        // Descargar el CSV
-        const resp = await fetch(https://docs.google.com/spreadsheets/d/1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64/edit?gid=0#gid=0);
+        const resp = await fetch(urlCSV);
         const text = await resp.text();
 
-        // Parsear CSV
         datos = csvToArray(text);
 
-        // Completar combos (únicos)
         empresas = [...new Set(datos.map(d => d['Empresa']).filter(x => x))];
         bancos = [...new Set(datos.map(d => d['Medio de Pago']).filter(x => x))];
         meses = [...new Set(datos.map(d => getMesTexto(d['Fecha Tentativa'])).filter(x => x && x !== '-'))].sort(mesSorter);
@@ -47,7 +40,6 @@ async function cargarDatos() {
 
         mostrarResultados();
 
-        // Filtros
         document.getElementById('filtros').onsubmit = function(e) {
             e.preventDefault();
             mostrarResultados();
@@ -60,27 +52,23 @@ async function cargarDatos() {
 }
 
 function mostrarResultados() {
-    // Filtros seleccionados
     const empresa = empresaSel.value;
     const banco = bancoSel.value;
     const mes = mesSel.value;
     let total = 0;
 
-    // Filtrar
     const filtrados = datos.filter(d => 
         d['Empresa'] === empresa &&
         d['Medio de Pago'] === banco &&
         getMesTexto(d['Fecha Tentativa']) === mes
     );
 
-    // Si no hay nada:
     if (filtrados.length === 0) {
         tablaCuerpo.innerHTML = `<tr><td colspan="5">No se encontraron vencimientos para los filtros seleccionados.</td></tr>`;
         totalAPagar.innerHTML = "<b>Total a pagar: $0</b>";
         return;
     }
 
-    // Construir filas
     tablaCuerpo.innerHTML = '';
     filtrados.forEach((d, idx) => {
         let estado = (d['Estado'] || '').toLowerCase();
@@ -95,8 +83,8 @@ function mostrarResultados() {
             claseFila = 'pendiente-cerca';
         }
 
-        // Sumar solo los NO pagados
-        let imp = parseFloat(d['Importe'].replace(/\./g,'').replace(',','.')) || 0;
+        // Importe real
+        let imp = normalizarImporte(d['Importe']);
         if (!esPagado) total += imp;
 
         // Detalles y +Info
@@ -129,13 +117,11 @@ window.toggleDetalle = function(id) {
 
 // +Info Modal
 window.abrirModal = function(html) {
-    contenidoModal.innerHTML = html;
+    contenidoModal.innerHTML = `<b>Más información sobre el movimiento</b><br><br>${html}`;
     modal.style.display = 'block';
 };
 cerrarModal.onclick = () => modal.style.display = 'none';
 window.onclick = function(e) { if (e.target === modal) modal.style.display = "none"; };
-
-// ----------- UTILIDADES -----------
 
 // CSV a Array de objetos
 function csvToArray(str, delimiter = ",") {
@@ -164,7 +150,6 @@ function csvToArray(str, delimiter = ",") {
         row.push(field);
         rows.push(row);
     }
-    // armar objetos
     const campos = rows.shift().map(h=>h.trim());
     return rows.filter(r => r.length === campos.length).map(r => {
         const obj = {};
@@ -175,8 +160,16 @@ function csvToArray(str, delimiter = ",") {
 
 // Moneda
 function formatMoneda(n) {
-    if (!n) return '$0';
+    if (!n || isNaN(n)) return '$0';
     return '$' + n.toLocaleString('es-AR', {minimumFractionDigits: 0});
+}
+
+// Importes robusto: soporta miles y decimales argentinos
+function normalizarImporte(valor) {
+    if (!valor) return 0;
+    valor = valor.replace(/\./g,'').replace(',','.');
+    let num = parseFloat(valor);
+    return isNaN(num) ? 0 : num;
 }
 
 // Mes texto desde fecha (ej: "Julio de 2025")
