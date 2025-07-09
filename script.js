@@ -1,5 +1,5 @@
 // CONFIGURA tu URL de Google Sheets CSV exportado aquí:
-const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1v6N1P9XarWJJcfDqMfRPqj6A2B4zQXw0iwmu7wK1ZFkfTGstbHDydnkuU-pyeYhKf3p3OPZyduK5/pub?gid=0&single=true&output=csv";
+const urlCSV = "https://docs.google.com/spreadsheets/d/1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64/export?format=csv&gid=0";
 
 // Elementos
 const empresaSel = document.getElementById('empresa');
@@ -34,9 +34,15 @@ async function cargarDatos() {
         bancoSel.innerHTML = bancos.map(b => `<option value="${b}">${b}</option>`).join('');
         mesSel.innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
 
-        // Última actualización
-        const hoy = new Date();
-        fechaActualizacionElem.innerText = ("0"+hoy.getDate()).slice(-2) + "/" + ("0"+(hoy.getMonth()+1)).slice(-2) + "/" + hoy.getFullYear();
+        // Última actualización (de la hoja)
+        let ultimaFecha = datos.map(d => parseFecha(d['Fecha Emisión'])).filter(Boolean).sort((a,b)=>b-a)[0];
+        if (ultimaFecha) {
+            fechaActualizacionElem.innerText = ("0"+ultimaFecha.getDate()).slice(-2) + "/" + ("0"+(ultimaFecha.getMonth()+1)).slice(-2) + "/" + ultimaFecha.getFullYear();
+        } else {
+            // Si no hay fechas, ponemos hoy
+            const hoy = new Date();
+            fechaActualizacionElem.innerText = ("0"+hoy.getDate()).slice(-2) + "/" + ("0"+(hoy.getMonth()+1)).slice(-2) + "/" + hoy.getFullYear();
+        }
 
         mostrarResultados();
 
