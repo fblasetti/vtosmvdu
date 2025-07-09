@@ -1,12 +1,19 @@
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64/gviz/tq?tqx=out:json';
+
 let datos = [];
 let empresas = new Set();
 let medios = new Set();
 let meses = new Set();
 let ultimaFechaActualizacion = "";
 
+function extraerJsonValido(txt) {
+    // Extrae SOLO el objeto JSON válido entre el primer y último {}
+    const primer = txt.indexOf('{');
+    const ultimo = txt.lastIndexOf('}');
+    return txt.substring(primer, ultimo + 1);
+}
+
 function parseFechaGoogle(fecha) {
-    // Soporta formato "Date(2025,6,8)"
     if (fecha && typeof fecha === "string" && fecha.startsWith("Date(")) {
         const nums = fecha.match(/\d+/g);
         if (nums && nums.length >= 3) {
@@ -14,7 +21,6 @@ function parseFechaGoogle(fecha) {
             return d.toLocaleDateString('es-AR');
         }
     }
-    // Soporta formato dd/mm/yyyy
     if (fecha && /^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
         return fecha;
     }
@@ -22,7 +28,6 @@ function parseFechaGoogle(fecha) {
 }
 
 function obtenerMesAnio(fecha) {
-    // Devuelve 'MM/YYYY' a partir de un objeto fecha o string google
     if (fecha && typeof fecha === "string" && fecha.startsWith("Date(")) {
         const nums = fecha.match(/\d+/g);
         if (nums && nums.length >= 3) {
@@ -37,8 +42,20 @@ function obtenerMesAnio(fecha) {
     return "";
 }
 
+function mesTexto(mes) {
+    const nombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    return nombres[(parseInt(mes) - 1)];
+}
+
+function normalizarImporte(valor) {
+    if (!valor) return 0;
+    if (typeof valor === "number") return valor;
+    valor = valor.replace(/[^0-9,.-]/g, '').replace(/\./g, '').replace(',', '.');
+    let num = parseFloat(valor);
+    return isNaN(num) ? 0 : num;
+}
+
 function actualizarFiltros() {
-    // Llena los select con opciones únicas
     const empresaSel = document.getElementById("empresa");
     const medioSel = document.getElementById("medioPago");
     const mesSel = document.getElementById("mes");
@@ -57,11 +74,6 @@ function actualizarFiltros() {
     ).join('');
 }
 
-function mesTexto(mes) {
-    const nombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-    return nombres[(parseInt(mes) - 1)];
-}
-
 function mostrarTabla(filas) {
     const tbody = document.querySelector('#tablaVencimientos tbody');
     tbody.innerHTML = '';
@@ -75,7 +87,7 @@ function mostrarTabla(filas) {
 
     for (const fila of filas) {
         const estado = (fila['Estado'] || '').toLowerCase();
-        const importe = parseInt(String(fila['Importe']).replace(/[^\d]/g, '')) || 0;
+        const importe = normalizarImporte(fila['Importe']);
         let clase = '';
         let sumar = true;
 
@@ -127,8 +139,8 @@ function mostrarTabla(filas) {
 }
 
 window.mostrarInfo = function(texto) {
-    if (!texto || texto.trim() === "") texto = 'No hay información extra para este registro.';
-    alert(texto);
+    if (!texto || texto.trim() === "") texto = 'No hay información adicional para este registro.';
+    alert("Más información sobre el movimiento:\n\n" + texto);
 };
 
 window.toggleDetalles = function(btn) {
@@ -161,7 +173,7 @@ function filtrar() {
 async function cargarDatos() {
     const res = await fetch(SHEET_URL);
     let texto = await res.text();
-    texto = texto.replace(/^[^{]+/, '').replace(/;?}$/,'}');
+    texto = extraerJsonValido(texto);
     const json = JSON.parse(texto);
     const cols = json.table.cols.map(c => c.label.trim());
     datos = json.table.rows.map(row => {
@@ -181,11 +193,9 @@ async function cargarDatos() {
     datos.forEach(fila => {
         if (fila['Empresa ']) empresas.add(fila['Empresa ']);
         if (fila['Medio de Pago']) medios.add(fila['Medio de Pago']);
-        // Relevamos MESES de Fecha Tentativa o Emisión
         const fecha = fila['Fecha Tentativa'] || fila['Fecha de Emisión'];
         const mesAnio = obtenerMesAnio(fecha);
         if (mesAnio) meses.add(mesAnio);
-        // Fecha actualización (busca la más reciente)
         if (fecha) fechasActualizacion.push(fecha);
     });
 
