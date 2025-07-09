@@ -1,149 +1,164 @@
-// Reemplaza aquí con el ID de tu hoja y el rango correcto
-const SHEET_ID = "1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64";
-const SHEET_NAME = "Hoja1";
-const RANGE = "A2:L200"; // Asegúrate de que el rango cubra todos los datos relevantes
-
-const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&range=${RANGE}`;
-
-let filasGlobal = [];
-
-function cargarDatos() {
-    fetch(url)
-        .then(res => res.text())
-        .then(texto => {
-            const json = JSON.parse(texto.substr(47).slice(0, -2));
-            const filas = json.table.rows.map(row => row.c.map(col => col ? col.v : ""));
-            filasGlobal = filas;
-            poblarFiltros(filas);
-            mostrarUltimaActualizacion(filas);
-        });
+body {
+    background: #171717;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
-function poblarFiltros(filas) {
-    // Empresas
-    const empresas = [...new Set(filas.map(f => f[0]).filter(Boolean))];
-    const empresaSelect = document.getElementById('empresa');
-    empresaSelect.innerHTML = empresas.map(e => `<option value="${e}">${e}</option>`).join('');
-
-    // Medios de Pago
-    const medios = [...new Set(filas.map(f => f[10]).filter(Boolean))];
-    const medioSelect = document.getElementById('medio-pago');
-    medioSelect.innerHTML = medios.map(m => `<option value="${m}">${m}</option>`).join('');
-
-    // Meses (a partir de Fecha Tentativa)
-    const meses = [...new Set(filas.map(f => {
-        if (!f[6]) return "";
-        const partes = f[6].split("/");
-        if (partes.length !== 3) return "";
-        const [dd, mm, yyyy] = partes;
-        return `${nombreMes(+mm)} de ${yyyy}`;
-    }).filter(Boolean))];
-    const mesSelect = document.getElementById('mes');
-    mesSelect.innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
+.container {
+    max-width: 440px;
+    background: #fff;
+    margin: 36px auto 36px auto;
+    border-radius: 24px;
+    box-shadow: 0 4px 28px rgba(0,0,0,0.18);
+    padding: 32px 18px 24px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-function nombreMes(m) {
-    return ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"][m];
+h1 {
+    text-align: center;
+    margin-top: 0;
+    font-size: 2rem;
+    margin-bottom: 12px;
 }
 
-function mostrarUltimaActualizacion(filas) {
-    // Columna Fecha Tentativa = 6
-    let fechas = filas.map(f => f[6]).filter(Boolean).map(f => {
-        let [d, m, a] = f.split("/");
-        return new Date(+a, +m - 1, +d);
-    });
-    if (!fechas.length) {
-        document.getElementById("fecha-actualizacion").innerText =
-            "Fecha de Última Actualización de Datos: --/--/----";
-        return;
+.actualizacion {
+    font-size: 1rem;
+    font-style: italic;
+    color: #888;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.formulario {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.formulario label {
+    font-size: 1rem;
+    margin-top: 5px;
+}
+
+.formulario select {
+    font-size: 1rem;
+    padding: 6px 4px;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    margin-bottom: 6px;
+}
+
+.formulario button {
+    width: 100%;
+    padding: 10px 0;
+    margin: 10px 0 0 0;
+    font-size: 1.12rem;
+    background: #eee;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.17s;
+}
+
+.formulario button:hover {
+    background: #ffd700;
+    color: #222;
+}
+
+.resultado {
+    width: 100%;
+    margin-top: 4px;
+}
+
+#totalPagar {
+    text-align: center;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+}
+
+.tabla-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.tabla-vencimientos {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+    background: #fff;
+    font-size: 1rem;
+}
+
+.tabla-vencimientos th, .tabla-vencimientos td {
+    border: 1px solid #d3d3d3;
+    padding: 7px 8px;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.tabla-vencimientos th {
+    background: #f5f5f5;
+    font-weight: bold;
+    font-size: 1.04rem;
+}
+
+.pagado {
+    background: #d2f8da !important;
+}
+
+.proximo-vencimiento {
+    background: #fff9c6 !important;
+}
+
+.firma {
+    text-align: center;
+    color: #888;
+    font-size: 1rem;
+    margin-top: 32px;
+    margin-bottom: 0;
+}
+
+.logo {
+    display: block;
+    margin: 14px auto 0 auto;
+    width: 72px;
+    height: auto;
+    max-width: 100px;
+    border-radius: 100%;
+    box-shadow: 0 3px 14px #0000001a;
+}
+
+@media (max-width: 600px) {
+    .container {
+        max-width: 98vw;
+        min-width: 0;
+        padding: 8vw 2vw 4vw 2vw;
     }
-    let maxFecha = new Date(Math.max(...fechas));
-    let fechaFormateada = maxFecha.toLocaleDateString("es-AR");
-    document.getElementById("fecha-actualizacion").innerText =
-        "Fecha de Última Actualización de Datos: " + fechaFormateada;
-}
-
-// Evento click de filtrar
-document.getElementById("filtrar").addEventListener("click", function () {
-    filtrarYMostrar();
-});
-
-function filtrarYMostrar() {
-    const empresa = document.getElementById('empresa').value;
-    const medio = document.getElementById('medio-pago').value;
-    const mes = document.getElementById('mes').value;
-
-    // Filtramos
-    let filtradas = filasGlobal.filter(f => {
-        const partes = f[6] ? f[6].split("/") : [];
-        const mesFila = partes.length === 3 ? `${nombreMes(+partes[1])} de ${partes[2]}` : "";
-        return f[0] === empresa && f[10] === medio && mesFila === mes;
-    });
-
-    mostrarTabla(filtradas);
-}
-
-function mostrarTabla(filas) {
-    const tbody = document.querySelector("#tabla-resultados tbody");
-    tbody.innerHTML = "";
-
-    let total = 0;
-
-    if (!filas.length) {
-        tbody.innerHTML = `<tr><td colspan="5">No se encontraron vencimientos para los filtros seleccionados.</td></tr>`;
-        document.getElementById("total-pagar").innerText = "Total a pagar: $0";
-        return;
+    .logo {
+        width: 52px;
+        max-width: 80px;
+        margin-bottom: 16px;
     }
-
-    filas.forEach(fila => {
-        // Columnas
-        // 0-Empresa, 1-Fecha Emisión, 2-Motivo, 3-Proveedor, 4-Importe, 5-Forma de Pago, 6-Fecha Tentativa, 7-Fecha Real, 8-Estado, 9-Detalle, 10-Medio de Pago
-        let estado = (fila[8] || "").toLowerCase();
-        let importe = parseFloat(fila[4].toString().replace(/\./g, "").replace(",", ".") || "0");
-
-        let clase = "";
-        // Pagado (verde)
-        if (estado === "pagado") {
-            clase = "fila-pagado";
-        } else {
-            // Amarillo: faltan 5 días o menos para el vencimiento
-            let hoy = new Date();
-            let fechaTentativa = null;
-            if (fila[6]) {
-                let [d, m, a] = fila[6].split("/");
-                fechaTentativa = new Date(+a, +m - 1, +d);
-                let diff = (fechaTentativa - hoy) / (1000 * 60 * 60 * 24);
-                if (diff <= 5 && diff >= 0) clase = "fila-proximo-vencer";
-            }
-        }
-
-        // Sumamos al total si NO está pagado
-        if (estado !== "pagado" && !isNaN(importe)) total += importe;
-
-        // Formateo de importe
-        let importeMostrar = isNaN(importe) ? "" : "$" + importe.toLocaleString("es-AR");
-
-        // Fila
-        let filaHTML = `<tr class="${clase}">
-            <td>${fila[1] || "-"}</td>
-            <td>${fila[10] || "-"}</td>
-            <td>${importeMostrar}</td>
-            <td><button onclick="mostrarDetalle('${fila[2] || ""}', '${fila[3] || ""}', '${fila[5] || ""}', '${fila[6] || ""}', '${fila[7] || ""}', '${fila[8] || ""}', '${fila[9] || ""}')">+</button></td>
-            <td><button onclick="mostrarInfo('${fila.join("||")}')">+Info</button></td>
-        </tr>`;
-        tbody.innerHTML += filaHTML;
-    });
-
-    document.getElementById("total-pagar").innerText = "Total a pagar: $" + total.toLocaleString("es-AR");
+    .tabla-vencimientos th, .tabla-vencimientos td {
+        font-size: 0.92rem;
+        padding: 6px 2px;
+    }
+    .firma {
+        font-size: 0.98rem;
+    }
 }
 
-// Funciones popup
-window.mostrarDetalle = function (motivo, proveedor, formaPago, fechaTentativa, fechaReal, estado, detalle) {
-    alert(`Motivo: ${motivo}\nProveedor: ${proveedor}\nForma de Pago: ${formaPago}\nFecha Tentativa: ${fechaTentativa}\nFecha Real: ${fechaReal}\nEstado: ${estado}\nDetalle: ${detalle}`);
-};
-window.mostrarInfo = function (todo) {
-    alert(todo.split("||").join("\n"));
-};
-
-// Inicialización
-cargarDatos();
+::-webkit-scrollbar {
+    width: 8px;
+    background: #eee;
+}
+::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 6px;
+}
