@@ -1,5 +1,5 @@
-// CONFIGURA tu URL de Google Sheets CSV exportado aquí:
-const urlCSV = "https://docs.google.com/spreadsheets/d/1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64/export?format=csv&gid=0";
+// Configuración: URL del Google Sheets en modo público (no requiere CSV)
+const sheetURL = "https://docs.google.com/spreadsheets/d/1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64/gviz/tq?tqx=out:json";
 
 // Elementos
 const empresaSel = document.getElementById('empresa');
@@ -21,10 +21,20 @@ window.addEventListener('DOMContentLoaded', cargarDatos);
 
 async function cargarDatos() {
     try {
-        const resp = await fetch(urlCSV);
-        const text = await resp.text();
+        const resp = await fetch(sheetURL);
+        let text = await resp.text();
 
-        datos = csvToArray(text);
+        // Extraer solo el JSON
+        text = text.replace(/^[^{]+/, '').replace(/;?\s*}?\s*$/, '}');
+        const json = JSON.parse(text);
+        const cols = json.table.cols.map(c => c.label.trim());
+        datos = json.table.rows.map(row => {
+            const obj = {};
+            row.c.forEach((cell, idx) => {
+                obj[cols[idx]] = cell ? cell.v : "";
+            });
+            return obj;
+        });
 
         empresas = [...new Set(datos.map(d => d['Empresa']).filter(x => x))];
         bancos = [...new Set(datos.map(d => d['Medio de Pago']).filter(x => x))];
@@ -34,12 +44,11 @@ async function cargarDatos() {
         bancoSel.innerHTML = bancos.map(b => `<option value="${b}">${b}</option>`).join('');
         mesSel.innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
 
-        // Última actualización (de la hoja)
+        // Última actualización
         let ultimaFecha = datos.map(d => parseFecha(d['Fecha Emisión'])).filter(Boolean).sort((a,b)=>b-a)[0];
         if (ultimaFecha) {
             fechaActualizacionElem.innerText = ("0"+ultimaFecha.getDate()).slice(-2) + "/" + ("0"+(ultimaFecha.getMonth()+1)).slice(-2) + "/" + ultimaFecha.getFullYear();
         } else {
-            // Si no hay fechas, ponemos hoy
             const hoy = new Date();
             fechaActualizacionElem.innerText = ("0"+hoy.getDate()).slice(-2) + "/" + ("0"+(hoy.getMonth()+1)).slice(-2) + "/" + hoy.getFullYear();
         }
@@ -129,56 +138,19 @@ window.abrirModal = function(html) {
 cerrarModal.onclick = () => modal.style.display = 'none';
 window.onclick = function(e) { if (e.target === modal) modal.style.display = "none"; };
 
-// CSV a Array de objetos
-function csvToArray(str, delimiter = ",") {
-    const headers = [];
-    const rows = [];
-    let insideQuotes = false, field = '', row = [];
-    for (let i = 0; i < str.length; ++i) {
-        const c = str[i];
-        if (c === '"') {
-            insideQuotes = !insideQuotes;
-        } else if (c === delimiter && !insideQuotes) {
-            row.push(field);
-            field = '';
-        } else if ((c === '\n' || c === '\r') && !insideQuotes) {
-            if (field || row.length > 0) {
-                row.push(field);
-                field = '';
-                rows.push(row);
-                row = [];
-            }
-        } else {
-            field += c;
-        }
-    }
-    if (field || row.length > 0) {
-        row.push(field);
-        rows.push(row);
-    }
-    const campos = rows.shift().map(h=>h.trim());
-    return rows.filter(r => r.length === campos.length).map(r => {
-        const obj = {};
-        campos.forEach((c,i) => obj[c] = (r[i]||'').trim());
-        return obj;
-    });
-}
+// --- UTILIDADES ---
 
 // Moneda
 function formatMoneda(n) {
     if (!n || isNaN(n)) return '$0';
     return '$' + n.toLocaleString('es-AR', {minimumFractionDigits: 0});
 }
-
-// Importes robusto: soporta miles y decimales argentinos
 function normalizarImporte(valor) {
     if (!valor) return 0;
-    valor = valor.replace(/\./g,'').replace(',','.');
+    valor = valor.toString().replace(/\./g,'').replace(',','.');
     let num = parseFloat(valor);
     return isNaN(num) ? 0 : num;
 }
-
-// Mes texto desde fecha (ej: "Julio de 2025")
 function getMesTexto(fecha) {
     if (!fecha || fecha.length < 7) return "-";
     let f = fecha.replaceAll("/", "-").replaceAll(".", "-");
@@ -192,14 +164,12 @@ function getMesTexto(fecha) {
     if (isNaN(mesNum) || mesNum < 1 || mesNum > 12) return "-";
     return `${meses[mesNum]} de ${y}`;
 }
-// Ordenar meses
 function mesSorter(a,b) {
     let [ma,ya] = a.split(' de '), [mb,yb] = b.split(' de ');
     if (ya !== yb) return ya - yb;
     const mList = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
     return mList.indexOf(ma) - mList.indexOf(mb);
 }
-// Fecha a objeto Date (YYYY-MM-DD)
 function parseFecha(fecha) {
     if (!fecha) return null;
     let f = fecha.replaceAll("/", "-").replaceAll(".", "-");
@@ -210,19 +180,16 @@ function parseFecha(fecha) {
     let d = partes[0].length === 4 ? partes[2] : partes[0];
     return new Date(`${y}-${("0"+m).slice(-2)}-${("0"+d).slice(-2)}`);
 }
-// Fecha truncada a día
 function truncHoy() {
     let h = new Date();
     return new Date(h.getFullYear(), h.getMonth(), h.getDate());
 }
-// Detalles para fila desplegable
 function generarDetalle(d) {
     let campos = ["Motivo","Proveedor","Forma de Pago","Fecha Tentativa","Estado"];
     return campos.map(c =>
         d[c] ? `<b>${c}:</b> ${d[c]}` : ''
     ).filter(x=>x).join("<br>");
 }
-// Info extra (para el modal)
 function generarInfoExtra(d) {
     let detalles = [];
     for (let k in d) {
