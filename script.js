@@ -1,237 +1,252 @@
-const SHEET_ID = "1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64";
-const SHEET_NAME = "Hoja 1";
-const SHEET_RANGE = "A1:L200";
-const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&range=${SHEET_RANGE}`;
+document.addEventListener("DOMContentLoaded", async function() {
+    const SHEET_ID = "1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64";
+    const SHEET_NAME = "Hoja 1";
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+    let datos = [];
+    let fechaUltimaActualizacion = "";
+    const empresaSel = document.getElementById("empresa");
+    const medioPagoSel = document.getElementById("medioPago");
+    const mesSel = document.getElementById("mes");
+    const tablaContainer = document.getElementById("tabla-container");
+    const totalDiv = document.getElementById("total");
+    const errorDiv = document.getElementById("error");
+    const fechaActDiv = document.getElementById("fecha-actualizacion");
+    const popup = document.getElementById("popup");
+    const popupInfo = document.getElementById("popupInfo");
+    const cerrarPopup = document.getElementById("cerrarPopup");
 
-let rawData = [];
-let ultimaActualizacion = "";
+    function limpiarSelect(select) {
+        select.innerHTML = '<option value="">--</option>';
+    }
 
-document.addEventListener('DOMContentLoaded', async function () {
-    await cargarDatos();
-    cargarFiltros();
-    document.getElementById('okBtn').addEventListener('click', mostrarResultados);
-});
+    function formatoMoneda(valor) {
+        if (!valor || isNaN(valor)) return "$0";
+        return "$" + valor.toLocaleString('es-AR');
+    }
 
-async function cargarDatos() {
-    try {
-        const response = await fetch(URL);
-        const text = await response.text();
-        const json = JSON.parse(text.substr(47).slice(0, -2));
-        rawData = [];
-        let columnas = json.table.cols.map(col => col.label);
+    function obtenerMesesDisponibles(datos, empresa, medioPago) {
+        const meses = new Set();
+        datos.forEach(fila => {
+            if ((empresa === "" || fila.empresa === empresa) &&
+                (medioPago === "" || fila.medioPago === medioPago)) {
+                meses.add(fila.mes);
+            }
+        });
+        return Array.from(meses).sort((a, b) => {
+            // Ordena por año y mes (por ej: "Julio de 2025")
+            const [ma, ya] = a.split(" de ");
+            const [mb, yb] = b.split(" de ");
+            if (ya !== yb) return parseInt(ya) - parseInt(yb);
+            const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+            return meses.indexOf(ma) - meses.indexOf(mb);
+        });
+    }
 
-        json.table.rows.forEach(row => {
-            let obj = {};
-            columnas.forEach((col, idx) => {
-                obj[col] = row.c[idx] ? row.c[idx].v : "";
+    function mostrarPopup(info) {
+        popupInfo.innerHTML = info;
+        popup.style.display = "block";
+    }
+    cerrarPopup.onclick = () => { popup.style.display = "none"; };
+    window.onclick = (event) => {
+        if (event.target === popup) popup.style.display = "none";
+    };
+
+    // 1. Cargar y parsear datos de Google Sheets
+    async function cargarDatos() {
+        errorDiv.innerText = "";
+        try {
+            const res = await fetch(SHEET_URL);
+            const txt = await res.text();
+            // Extraer JSON entre paréntesis
+            const json = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+            const columnas = json.table.cols.map(col => col.label);
+            const filas = json.table.rows;
+            datos = filas.map(fila => {
+                const obj = {};
+                fila.c.forEach((celda, idx) => {
+                    obj[columnas[idx]] = celda ? celda.v : "";
+                });
+                return {
+                    empresa: obj["Empresa"] || "",
+                    medioPago: obj["Medio de Pago"] || "",
+                    mes: obj["Mes"] || "",
+                    fechaEmision: obj["Fecha Emisión"] || "",
+                    fechaTentativa: obj["Fecha Tentativa"] || "",
+                    banco: obj["Medio de Pago"] || "",
+                    importe: parseFloat(obj["Importe"] ? obj["Importe"].toString().replace(/\./g, '').replace(',','.') : 0),
+                    detalle: obj["Detalle"] || "",
+                    proveedor: obj["Proveedor"] || "",
+                    motivo: obj["Motivo"] || "",
+                    formaPago: obj["Forma de Pago"] || "",
+                    estado: (obj["Estado"] || "").toString().trim()
+                }
             });
-            rawData.push(obj);
+
+            // Determinar la fecha de última actualización desde "Última actualización" (si existe) o última fila
+            let ult = filas[filas.length - 1];
+            if (ult && ult.c) {
+                const idxFechaAct = columnas.findIndex(c => c.toLowerCase().includes('actualizacion'));
+                if (idxFechaAct >= 0 && ult.c[idxFechaAct] && ult.c[idxFechaAct].v) {
+                    fechaUltimaActualizacion = ult.c[idxFechaAct].v;
+                }
+            }
+        } catch (err) {
+            errorDiv.innerText = "Error cargando datos.\n" + err;
+        }
+    }
+
+    // 2. Poblar combos
+    function poblarCombos() {
+        limpiarSelect(empresaSel);
+        limpiarSelect(medioPagoSel);
+        limpiarSelect(mesSel);
+
+        // Empresas únicas
+        const empresas = Array.from(new Set(datos.map(f => f.empresa).filter(x => x))).sort();
+        empresas.forEach(emp => {
+            const opt = document.createElement("option");
+            opt.value = emp;
+            opt.text = emp;
+            empresaSel.appendChild(opt);
         });
 
-        // Buscar la fecha de última actualización
-        ultimaActualizacion = "";
-        let fechas = rawData
-            .map(r => r['Fecha Modificacion'] || r['Fecha Actualizacion'] || r['Actualizacion'] || r['Última Modificacion'])
-            .filter(f => f && typeof f === "string" && f.match(/\d{2}\/\d{2}\/\d{4}/));
-        if (fechas.length) {
-            fechas.sort((a, b) => new Date(b.split('/').reverse().join('-')) - new Date(a.split('/').reverse().join('-')));
-            ultimaActualizacion = fechas[0];
-        } else {
-            // Buscar si hay una fila de última actualización
-            const fila = rawData.find(r => String(r['Empresa']).toLowerCase().includes('ultima actualizacion'));
-            if (fila) ultimaActualizacion = fila['Fecha Emisión'] || fila['Fecha'] || "";
-        }
-        if (!ultimaActualizacion) ultimaActualizacion = new Date().toLocaleDateString('es-AR');
-
-        document.getElementById("fechaActualizacion").innerText = ultimaActualizacion;
-
-    } catch (error) {
-        document.getElementById("fechaActualizacion").innerText = "--/--/----";
-        document.getElementById("tablaResultados").innerHTML =
-            `<tr><td colspan="5" style="color:red; text-align:center;">
-            Error cargando datos.<br>${error.message}
-            </td></tr>`;
-        rawData = [];
+        // Medios de pago únicos
+        const medios = Array.from(new Set(datos.map(f => f.medioPago).filter(x => x))).sort();
+        medios.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m;
+            opt.text = m;
+            medioPagoSel.appendChild(opt);
+        });
     }
-}
 
-function cargarFiltros() {
-    const empresaSelect = document.getElementById('empresa');
-    const medioPagoSelect = document.getElementById('medioPago');
-    const mesSelect = document.getElementById('mes');
+    // 3. Cuando cambian empresa/medioPago, poblar los meses
+    function actualizarMeses() {
+        limpiarSelect(mesSel);
+        const empresa = empresaSel.value;
+        const medioPago = medioPagoSel.value;
+        const meses = obtenerMesesDisponibles(datos, empresa, medioPago);
+        meses.forEach(mes => {
+            const opt = document.createElement("option");
+            opt.value = mes;
+            opt.text = mes;
+            mesSel.appendChild(opt);
+        });
+    }
 
-    // Limpiar opciones
-    empresaSelect.innerHTML = "";
-    medioPagoSelect.innerHTML = "";
-    mesSelect.innerHTML = "";
+    // 4. Filtrar y mostrar resultados
+    function filtrarYMostrar() {
+        tablaContainer.innerHTML = "";
+        totalDiv.innerText = "";
+        errorDiv.innerText = "";
 
-    // Empresas
-    let empresas = [...new Set(rawData.map(r => r['Empresa']).filter(e => e))];
-    empresas.forEach(e => {
-        let opt = document.createElement('option');
-        opt.value = e;
-        opt.textContent = e;
-        empresaSelect.appendChild(opt);
-    });
+        const empresa = empresaSel.value;
+        const medioPago = medioPagoSel.value;
+        const mes = mesSel.value;
 
-    // Medios de pago
-    let medios = [...new Set(rawData.map(r => r['Medio de Pago'] || r['Banco']).filter(e => e))];
-    medios.forEach(m => {
-        let opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m;
-        medioPagoSelect.appendChild(opt);
-    });
+        let filtrados = datos.filter(f =>
+            (empresa === "" || f.empresa === empresa) &&
+            (medioPago === "" || f.medioPago === medioPago) &&
+            (mes === "" || f.mes === mes)
+        );
 
-    // Meses (tomados de Fecha Tentativa)
-    let meses = [...new Set(rawData.map(r => {
-        let fecha = r['Fecha Tentativa'] || r['Fecha Vencimiento'];
-        if (fecha && fecha.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-            let [d, m, y] = fecha.split('/');
-            return `${nombreMes(+m)} de ${y}`;
+        // Excluir los registros vacíos
+        filtrados = filtrados.filter(f => f.empresa && f.medioPago && f.mes);
+
+        // Calcular el total SOLO de los que NO están pagados
+        let total = 0;
+        filtrados.forEach(f => {
+            if (!f.estado || f.estado.toLowerCase() !== "pagado") {
+                total += isNaN(f.importe) ? 0 : f.importe;
+            }
+        });
+
+        totalDiv.innerHTML = `Total a pagar: <b>${formatoMoneda(total)}</b>`;
+
+        // Generar tabla
+        let html = `<table>
+            <tr>
+                <th>Fecha Emisión</th>
+                <th>Banco</th>
+                <th>Importe</th>
+                <th>+ Detalles</th>
+                <th>+Info</th>
+            </tr>`;
+
+        if (filtrados.length === 0) {
+            html += `<tr><td colspan="5">No se encontraron vencimientos para los filtros seleccionados.</td></tr>`;
+        } else {
+            // Calcular días al vencimiento para colorear
+            const hoy = new Date();
+            filtrados.forEach(f => {
+                let clase = "";
+                let fechaVenc = f.fechaTentativa ? parseDateDMY(f.fechaTentativa) : null;
+                if (f.estado && f.estado.toLowerCase() === "pagado") {
+                    clase = "pagado";
+                } else if (fechaVenc) {
+                    const diff = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
+                    if (diff >= 0 && diff < 5) clase = "por-vencer";
+                }
+                html += `<tr class="${clase}">
+                    <td>${f.fechaEmision || "-"}</td>
+                    <td>${f.medioPago || "-"}</td>
+                    <td>${formatoMoneda(f.importe)}</td>
+                    <td>
+                        <button onclick="this.parentNode.parentNode.querySelector('.detalles').classList.toggle('show')">+</button>
+                        <div class="detalles" style="display:none;position:absolute;background:#fff;border:1px solid #ccc;padding:7px;z-index:2;font-size:0.98rem;">${f.detalle || '-'}</div>
+                    </td>
+                    <td>
+                        ${f.motivo || f.proveedor || f.formaPago ?
+                        `<button class="infoBtn" data-info="${encodeURIComponent(`
+Motivo: ${f.motivo || '-'}<br>
+Proveedor: ${f.proveedor || '-'}<br>
+Forma de Pago: ${f.formaPago || '-'}<br>
+Estado: ${f.estado || '-'}<br>
+Fecha Tentativa: ${f.fechaTentativa || '-'}<br>
+`)}">+Info</button>`
+                        : ""}
+                    </td>
+                </tr>`;
+            });
         }
-        return null;
-    }).filter(e => e))];
+        html += "</table>";
+        tablaContainer.innerHTML = html;
 
-    meses.sort((a, b) => {
-        // Comparar año y mes para orden cronológico
-        let [ma, ya] = a.split(" de ");
-        let [mb, yb] = b.split(" de ");
-        let numA = parseInt(ya) * 12 + mesANumero(ma);
-        let numB = parseInt(yb) * 12 + mesANumero(mb);
-        return numA - numB;
-    });
+        // Agregar evento a los botones de detalles
+        tablaContainer.querySelectorAll(".detalles").forEach(det => {
+            det.parentNode.querySelector("button").onclick = function () {
+                det.style.display = det.style.display === "block" ? "none" : "block";
+            };
+        });
 
-    meses.forEach(m => {
-        let opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m;
-        mesSelect.appendChild(opt);
-    });
-}
+        // Agregar evento a los +Info
+        tablaContainer.querySelectorAll(".infoBtn").forEach(btn => {
+            btn.onclick = function() {
+                mostrarPopup(decodeURIComponent(this.dataset.info));
+            }
+        });
+    }
 
-function nombreMes(n) {
-    return [
-        "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    ][n];
-}
+    function parseDateDMY(str) {
+        // Soporta "08/07/2025" o "8/7/2025"
+        if (!str) return null;
+        const parts = str.split("/");
+        if (parts.length !== 3) return null;
+        const [d, m, y] = parts;
+        return new Date(+y, +m - 1, +d);
+    }
 
-function mesANumero(nombre) {
-    return {
-        "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5, "Junio": 6,
-        "Julio": 7, "Agosto": 8, "Septiembre": 9, "Octubre": 10, "Noviembre": 11, "Diciembre": 12
-    }[nombre] || 0;
-}
+    // --- Inicialización ---
+    await cargarDatos();
+    poblarCombos();
+    actualizarMeses();
+    filtrarYMostrar();
 
-function mostrarResultados() {
-    const empresa = document.getElementById('empresa').value;
-    const medio = document.getElementById('medioPago').value;
-    const mesTexto = document.getElementById('mes').value;
+    // Mostrar fecha de última actualización
+    fechaActDiv.innerHTML = "Fecha de Última Actualización de Datos: " + (fechaUltimaActualizacion ? fechaUltimaActualizacion : "--/--/----");
 
-    // Extraer mes y año para filtrar
-    let [mesNombre, , año] = mesTexto.split(" ");
-    let mesNum = mesANumero(mesNombre);
-
-    // Filtrar registros
-    let datos = rawData.filter(r =>
-        r['Empresa'] === empresa &&
-        (r['Medio de Pago'] === medio || r['Banco'] === medio)
-    ).filter(r => {
-        let fecha = r['Fecha Tentativa'] || r['Fecha Vencimiento'];
-        if (!fecha || !fecha.match(/^\d{2}\/\d{2}\/\d{4}$/)) return false;
-        let [d, m, y] = fecha.split('/');
-        return parseInt(m) === mesNum && parseInt(y) === parseInt(año);
-    }).filter(r => {
-        // Solo los que NO están pagados
-        return !String(r['Estado'] || "").toLowerCase().includes("pagad");
-    });
-
-    // Sumar importes y mostrar
-    let total = datos.reduce((acc, r) => {
-        let imp = r['Importe'] || r['A pagar'] || r['Monto'];
-        imp = typeof imp === 'string' ? imp.replace(/\./g, '').replace(',', '.') : imp;
-        let num = Number(imp) || 0;
-        return acc + num;
-    }, 0);
-
-    document.getElementById("totalPagar").innerHTML =
-        `<b>Total a pagar: $${formatearNumero(total)}</b>`;
-
-    // Mostrar tabla
-    let filas = "";
-    let hoy = new Date();
-    datos.forEach(r => {
-        let fechaEmision = r['Fecha Emisión'] || r['Fecha'] || "-";
-        let medioPago = r['Medio de Pago'] || r['Banco'] || "-";
-        let importe = r['Importe'] || r['A pagar'] || r['Monto'] || 0;
-        let detalle = r['Motivo'] || r['Detalle'] || "";
-        let proveedor = r['Proveedor'] || "";
-        let formaPago = r['Forma de Pago'] || "";
-        let estado = r['Estado'] || "";
-        let fechaTentativa = r['Fecha Tentativa'] || r['Fecha Vencimiento'] || "";
-
-        // Colorear filas
-        let color = "";
-        if (String(estado).toLowerCase().includes("pagad")) {
-            color = "style='background:#d6f5d6;'";
-        } else if (fechaTentativa && fechaTentativa.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-            let [d, m, y] = fechaTentativa.split('/');
-            let fechaVenc = new Date(`${y}-${m}-${d}T00:00:00`);
-            let diff = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
-            if (diff >= 0 && diff <= 5) color = "style='background:#fff7b2;'";
-        }
-
-        // Info extra
-        let info =
-            `<b>Más información sobre el movimiento:</b><br>
-            <b>Motivo:</b> ${detalle}<br>
-            <b>Proveedor:</b> ${proveedor}<br>
-            <b>Importe:</b> $${formatearNumero(importe)}<br>
-            <b>Forma de pago:</b> ${formaPago}<br>
-            <b>Fecha tentativa:</b> ${fechaTentativa}<br>
-            <b>Estado:</b> ${estado}`;
-
-        // Botón de detalle (+)
-        let btnDetalle = `<button onclick="alert('${detalle ? detalle.replace(/'/g, "\\'") : 'Sin detalle'}')">+</button>`;
-        // Botón de +Info (si hay algo relevante)
-        let btnInfo = (detalle || proveedor || formaPago) ?
-            `<button onclick="mostrarInfo(\`${info.replace(/`/g, "\\`")}\`)">+Info</button>` :
-            "";
-
-        filas += `<tr ${color}>
-            <td>${fechaEmision}</td>
-            <td>${medioPago}</td>
-            <td>$${formatearNumero(importe)}</td>
-            <td>${btnDetalle}</td>
-            <td>${btnInfo}</td>
-        </tr>`;
-    });
-
-    if (!filas) filas = `<tr><td colspan="5" style="text-align:center;">No se encontraron vencimientos para los filtros seleccionados.</td></tr>`;
-    document.getElementById("tablaResultados").innerHTML = filas;
-}
-
-function formatearNumero(num) {
-    num = Number(num) || 0;
-    return num.toLocaleString('es-AR', { minimumFractionDigits: 0 });
-}
-
-window.mostrarInfo = function (info) {
-    // Modal bonito, pero simple
-    const modal = document.createElement("div");
-    modal.style.position = "fixed";
-    modal.style.top = 0;
-    modal.style.left = 0;
-    modal.style.width = "100vw";
-    modal.style.height = "100vh";
-    modal.style.background = "rgba(0,0,0,0.5)";
-    modal.style.zIndex = 9999;
-    modal.innerHTML = `
-        <div style="background:#fff;max-width:340px;padding:24px;border-radius:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 4px 24px #0002;">
-            <div style="margin-bottom:18px;">${info}</div>
-            <button onclick="this.closest('div[style]').parentNode.remove()">Cerrar</button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
+    empresaSel.onchange = () => { actualizarMeses(); filtrarYMostrar(); }
+    medioPagoSel.onchange = () => { actualizarMeses(); filtrarYMostrar(); }
+    mesSel.onchange = filtrarYMostrar;
+    document.getElementById("filtrarBtn").onclick = filtrarYMostrar;
+});
