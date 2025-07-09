@@ -1,65 +1,55 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta de Vencimientos</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Vencimientos</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="contenedor">
-    <h2>Consulta de Vencimientos</h2>
-    <div id="ultima-actualizacion" class="ultima-actualizacion">
-      Fecha de Última Actualización de Datos: <span id="fecha-actualizacion">--/--/----</span>
-    </div>
-    <div>
-      <label for="empresa">Empresa:</label>
-      <select id="empresa">
-        <option value="Mesa Verde SRL">Mesa Verde SRL</option>
-        <option value="Dumas">Dumas</option>
-      </select>
+    <div class="contenedor">
+        <h1>Consulta de Vencimientos</h1>
+        <div class="fecha-actualizacion" id="fecha-actualizacion">Fecha de Última Actualización de Datos: --/--/----</div>
 
-      <label for="medio">Medio de Pago:</label>
-      <select id="medio">
-        <option value="Banco Santander">Banco Santander</option>
-        <option value="Banco Galicia">Banco Galicia</option>
-        <option value="Banco Nacion">Banco Nacion</option>
-        <option value="Efectivo">Efectivo</option>
-      </select>
+        <div class="formulario">
+            <label for="empresa"><b>Empresa:</b></label>
+            <select id="empresa"></select>
 
-      <label for="mes">Mes:</label>
-      <select id="mes"></select>
+            <label for="medio-pago"><b>Medio de Pago:</b></label>
+            <select id="medio-pago"></select>
 
-      <button id="ver-btn">¡OK!</button>
-    </div>
+            <label for="mes"><b>Mes:</b></label>
+            <select id="mes"></select>
 
-    <div id="resultado" style="display:none;">
-      <div class="total-pagar">
-        <b>Total a pagar: $<span id="total">0</span></b>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha Emisión</th>
-            <th>Medio de Pago</th>
-            <th>Importe</th>
-            <th>Detalle</th>
-            <th>+Info</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-vencimientos"></tbody>
-      </table>
+            <button id="filtrar">¡OK!</button>
+        </div>
+
+        <div class="total-pagar" id="total-pagar">Total a pagar: $0</div>
+
+        <div class="tabla-contenedor">
+            <table id="tabla-resultados">
+                <thead>
+                    <tr>
+                        <th>Fecha Emisión</th>
+                        <th>Banco</th>
+                        <th>Importe</th>
+                        <th>+ Detalles</th>
+                        <th>+Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Aquí van las filas -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="firma">
+            Hecho por Francisco Javier Blasetti Garcia - Derechos Reservados
+            <div class="logo-container">
+                <img src="images/mi_logo_personal.png" alt="Logo de Francisco Javier Blasetti Garcia" class="logo-firma">
+            </div>
+        </div>
     </div>
-    <div class="firma">
-      <span>Hecho por Francisco Javier Blasetti Garcia - Derechos Reservados</span><br>
-<img src="images/mi_logo_personal.png" alt="Logo de Francisco Javier Blasetti Garcia" class="logo-firma">
-    </div>
-  </div>
-  <div id="overlay"></div>
-  <div id="popup">
-    <div id="popup-texto"></div>
-    <button onclick="cerrarPopup()" style="margin-top: 16px;">Cerrar</button>
-  </div>
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
