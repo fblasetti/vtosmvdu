@@ -1,201 +1,166 @@
-// Configuración: URL del Google Sheets en modo público (no requiere CSV)
-const sheetURL = "https://docs.google.com/spreadsheets/d/1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64/gviz/tq?tqx=out:json";
+const SHEET_ID = "1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64";
+const SHEET_NAME = "Hoja1";
+const SHEET_RANGE = "A1:Z1000";
+const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&range=${SHEET_RANGE}`;
 
-// Elementos
-const empresaSel = document.getElementById('empresa');
-const bancoSel = document.getElementById('banco');
-const mesSel = document.getElementById('mes');
-const tablaCuerpo = document.getElementById('tablaCuerpo');
-const totalAPagar = document.getElementById('totalAPagar');
-const fechaActualizacionElem = document.getElementById('fechaActualizacion');
-const modal = document.getElementById('modalInfo');
-const cerrarModal = document.getElementById('cerrarModal');
-const contenidoModal = document.getElementById('contenidoModal');
+let registrosFiltrados = [];
 
-let datos = [];
-let empresas = [];
-let bancos = [];
-let meses = [];
-
-window.addEventListener('DOMContentLoaded', cargarDatos);
-
-async function cargarDatos() {
-    try {
-        const resp = await fetch(sheetURL);
-        let text = await resp.text();
-
-        // Extraer solo el JSON
-        text = text.replace(/^[^{]+/, '').replace(/;?\s*}?\s*$/, '}');
-        const json = JSON.parse(text);
-        const cols = json.table.cols.map(c => c.label.trim());
-        datos = json.table.rows.map(row => {
-            const obj = {};
-            row.c.forEach((cell, idx) => {
-                obj[cols[idx]] = cell ? cell.v : "";
-            });
-            return obj;
-        });
-
-        empresas = [...new Set(datos.map(d => d['Empresa']).filter(x => x))];
-        bancos = [...new Set(datos.map(d => d['Medio de Pago']).filter(x => x))];
-        meses = [...new Set(datos.map(d => getMesTexto(d['Fecha Tentativa'])).filter(x => x && x !== '-'))].sort(mesSorter);
-
-        empresaSel.innerHTML = empresas.map(e => `<option value="${e}">${e}</option>`).join('');
-        bancoSel.innerHTML = bancos.map(b => `<option value="${b}">${b}</option>`).join('');
-        mesSel.innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
-
-        // Última actualización
-        let ultimaFecha = datos.map(d => parseFecha(d['Fecha Emisión'])).filter(Boolean).sort((a,b)=>b-a)[0];
-        if (ultimaFecha) {
-            fechaActualizacionElem.innerText = ("0"+ultimaFecha.getDate()).slice(-2) + "/" + ("0"+(ultimaFecha.getMonth()+1)).slice(-2) + "/" + ultimaFecha.getFullYear();
-        } else {
-            const hoy = new Date();
-            fechaActualizacionElem.innerText = ("0"+hoy.getDate()).slice(-2) + "/" + ("0"+(hoy.getMonth()+1)).slice(-2) + "/" + hoy.getFullYear();
-        }
-
-        mostrarResultados();
-
-        document.getElementById('filtros').onsubmit = function(e) {
-            e.preventDefault();
-            mostrarResultados();
-        };
-    } catch (err) {
-        fechaActualizacionElem.innerText = '--/--/----';
-        tablaCuerpo.innerHTML = `<tr><td colspan="5" style="color:red;">Error cargando datos.<br>${err.message}</td></tr>`;
-        totalAPagar.innerHTML = "<b>Total a pagar: $0</b>";
-    }
+function parseImporte(valor) {
+    if (typeof valor === "number") return valor;
+    if (!valor) return 0;
+    valor = valor.toString().replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]+/g, '');
+    const num = parseFloat(valor);
+    return isNaN(num) ? 0 : num;
 }
 
-function mostrarResultados() {
-    const empresa = empresaSel.value;
-    const banco = bancoSel.value;
-    const mes = mesSel.value;
-    let total = 0;
+function formatPeso(num) {
+    return num.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+}
 
-    const filtrados = datos.filter(d => 
-        d['Empresa'] === empresa &&
-        d['Medio de Pago'] === banco &&
-        getMesTexto(d['Fecha Tentativa']) === mes
-    );
+function formatFecha(fecha) {
+    if (!fecha || fecha === "-") return "-";
+    let d = new Date(fecha);
+    if (isNaN(d)) return fecha;
+    let dia = d.getDate().toString().padStart(2, '0');
+    let mes = (d.getMonth() + 1).toString().padStart(2, '0');
+    let anio = d.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+}
 
-    if (filtrados.length === 0) {
-        tablaCuerpo.innerHTML = `<tr><td colspan="5">No se encontraron vencimientos para los filtros seleccionados.</td></tr>`;
-        totalAPagar.innerHTML = "<b>Total a pagar: $0</b>";
+async function cargarDatos() {
+    let resp = await fetch(URL);
+    let texto = await resp.text();
+    let json = JSON.parse(texto.substring(47).slice(0, -2));
+    let headers = json.table.cols.map(c => c.label);
+    let data = json.table.rows.map(r => {
+        let fila = {};
+        r.c.forEach((cell, i) => fila[headers[i]] = cell ? cell.v : "");
+        return fila;
+    });
+    return data;
+}
+
+function poblarCombos(data) {
+    let empresas = [...new Set(data.map(d => d['Empresa']).filter(e => e))];
+    let bancos = [...new Set(data.map(d => d['Medio de Pago']).filter(e => e))];
+    let meses = [...new Set(data.map(d => {
+        let f = d['Fecha Tentativa'];
+        if (!f) return "";
+        let date = new Date(f);
+        if (isNaN(date)) return "";
+        return `${date.toLocaleString('es-AR', { month: 'long' }).charAt(0).toUpperCase() +
+            date.toLocaleString('es-AR', { month: 'long' }).slice(1)} de ${date.getFullYear()}`;
+    }).filter(e => e))];
+
+    document.getElementById('comboEmpresa').innerHTML = empresas.map(e => `<option>${e}</option>`).join('');
+    document.getElementById('comboBanco').innerHTML = bancos.map(e => `<option>${e}</option>`).join('');
+    document.getElementById('comboMes').innerHTML = meses.map(e => `<option>${e}</option>`).join('');
+}
+
+async function filtrarYMostrar(data) {
+    let empresa = document.getElementById('comboEmpresa').value;
+    let banco = document.getElementById('comboBanco').value;
+    let mesSel = document.getElementById('comboMes').value;
+
+    let partes = mesSel.split(' de ');
+    let mesBuscado = partes[0]?.toLowerCase();
+    let anioBuscado = partes[1];
+
+    registrosFiltrados = data.filter(d => {
+        if (d['Empresa'] !== empresa) return false;
+        if (d['Medio de Pago'] !== banco) return false;
+        let ft = d['Fecha Tentativa'];
+        if (!ft) return false;
+        let fechaTentativa = new Date(ft);
+        if (isNaN(fechaTentativa)) return false;
+        let mesFila = fechaTentativa.toLocaleString('es-AR', { month: 'long' }).toLowerCase();
+        let anioFila = fechaTentativa.getFullYear().toString();
+        return (mesFila === mesBuscado && anioFila === anioBuscado);
+    });
+
+    mostrarTabla(registrosFiltrados);
+}
+
+function mostrarTabla(registros) {
+    let tabla = document.getElementById('tablaResultados');
+    let totalAPagar = 0;
+    let hoy = new Date();
+
+    if (!registros.length) {
+        tabla.innerHTML = `<tr><td colspan="5">No se encontraron vencimientos para los filtros seleccionados.</td></tr>`;
+        document.getElementById('totalAPagar').innerText = formatPeso(0);
         return;
     }
 
-    tablaCuerpo.innerHTML = '';
-    filtrados.forEach((d, idx) => {
-        let estado = (d['Estado'] || '').toLowerCase();
-        let esPagado = estado === 'pagado';
-        let claseFila = '';
-        let fechaTent = parseFecha(d['Fecha Tentativa']);
-        let diasRestantes = fechaTent ? Math.ceil((fechaTent - truncHoy()) / (1000*60*60*24)) : 9999;
+    let html = '';
+    registros.forEach((d, idx) => {
+        let pagado = (d['Estado'] || '').toLowerCase().includes('pagado');
+        let importe = parseImporte(d['Importe']);
+        if (!pagado) totalAPagar += importe;
 
-        if (esPagado) {
-            claseFila = 'pagado';
-        } else if (diasRestantes <= 5 && diasRestantes >= 0) {
-            claseFila = 'pendiente-cerca';
+        let style = '';
+        if (pagado) {
+            style = 'background: #d6f5d6;';
+        } else if (d['Fecha Tentativa']) {
+            let diasRestantes = Math.floor((new Date(d['Fecha Tentativa']) - hoy) / (1000 * 60 * 60 * 24));
+            if (diasRestantes <= 5) style = 'background: #fff9c4;';
         }
 
-        // Importe real
-        let imp = normalizarImporte(d['Importe']);
-        if (!esPagado) total += imp;
+        let infoContent = d['Detalle'] || d['Motivo'] || d['Proveedor'] || d['Forma de Pago'] || d['Observaciones'];
+        let btnInfo = infoContent ?
+            `<button class="btn-info" onclick="mostrarInfo(${idx})">+Info</button>` : '';
 
-        // Detalles y +Info
-        let detallesBtn = `<button class="detalle-btn" onclick="toggleDetalle('detalle-${idx}')">+</button>`;
-        let infoExtra = generarInfoExtra(d);
-        let infoBtn = infoExtra ? `<button class="info-btn" onclick="abrirModal(\`${infoExtra}\`)">+Info</button>` : '';
-
-        tablaCuerpo.innerHTML += `
-        <tr class="${claseFila}">
-            <td>${d['Fecha Emisión']||'-'}</td>
-            <td>${d['Medio de Pago']||'-'}</td>
-            <td>${formatMoneda(imp)}</td>
-            <td>${detallesBtn}</td>
-            <td>${infoBtn}</td>
-        </tr>
-        <tr id="detalle-${idx}" class="detalle-row" style="display:none;">
-            <td colspan="5">${generarDetalle(d)}</td>
-        </tr>
+        html += `
+            <tr style="${style}">
+                <td>${formatFecha(d['Fecha Emisión'])}</td>
+                <td>${d['Medio de Pago']}</td>
+                <td>${formatPeso(importe)}</td>
+                <td><button onclick="mostrarDetalle(${idx})">+</button></td>
+                <td>${btnInfo}</td>
+            </tr>
         `;
     });
 
-    totalAPagar.innerHTML = `<b>Total a pagar: ${formatMoneda(total)}</b>`;
+    tabla.innerHTML = html;
+    document.getElementById('totalAPagar').innerText = formatPeso(totalAPagar);
 }
 
-// Detalle desplegable
-window.toggleDetalle = function(id) {
-    const fila = document.getElementById(id);
-    if (fila) fila.style.display = fila.style.display === 'none' ? '' : 'none';
-};
+function mostrarDetalle(idx) {
+    alert("Aquí puedes mostrar detalles clave del movimiento.");
+}
 
-// +Info Modal
-window.abrirModal = function(html) {
-    contenidoModal.innerHTML = `<b>Más información sobre el movimiento</b><br><br>${html}`;
-    modal.style.display = 'block';
-};
-cerrarModal.onclick = () => modal.style.display = 'none';
-window.onclick = function(e) { if (e.target === modal) modal.style.display = "none"; };
-
-// --- UTILIDADES ---
-
-// Moneda
-function formatMoneda(n) {
-    if (!n || isNaN(n)) return '$0';
-    return '$' + n.toLocaleString('es-AR', {minimumFractionDigits: 0});
-}
-function normalizarImporte(valor) {
-    if (!valor) return 0;
-    valor = valor.toString().replace(/\./g,'').replace(',','.');
-    let num = parseFloat(valor);
-    return isNaN(num) ? 0 : num;
-}
-function getMesTexto(fecha) {
-    if (!fecha || fecha.length < 7) return "-";
-    let f = fecha.replaceAll("/", "-").replaceAll(".", "-");
-    let partes = f.split("-");
-    if (partes.length < 2) return "-";
-    let y = partes[0].length === 4 ? partes[0] : partes[2];
-    let m = partes[0].length === 4 ? partes[1] : partes[1];
-    if (!y || !m) return "-";
-    let meses = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-    let mesNum = parseInt(m, 10);
-    if (isNaN(mesNum) || mesNum < 1 || mesNum > 12) return "-";
-    return `${meses[mesNum]} de ${y}`;
-}
-function mesSorter(a,b) {
-    let [ma,ya] = a.split(' de '), [mb,yb] = b.split(' de ');
-    if (ya !== yb) return ya - yb;
-    const mList = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-    return mList.indexOf(ma) - mList.indexOf(mb);
-}
-function parseFecha(fecha) {
-    if (!fecha) return null;
-    let f = fecha.replaceAll("/", "-").replaceAll(".", "-");
-    let partes = f.split("-");
-    if (partes.length < 3) return null;
-    let y = partes[0].length === 4 ? partes[0] : partes[2];
-    let m = partes[0].length === 4 ? partes[1] : partes[1];
-    let d = partes[0].length === 4 ? partes[2] : partes[0];
-    return new Date(`${y}-${("0"+m).slice(-2)}-${("0"+d).slice(-2)}`);
-}
-function truncHoy() {
-    let h = new Date();
-    return new Date(h.getFullYear(), h.getMonth(), h.getDate());
-}
-function generarDetalle(d) {
-    let campos = ["Motivo","Proveedor","Forma de Pago","Fecha Tentativa","Estado"];
-    return campos.map(c =>
-        d[c] ? `<b>${c}:</b> ${d[c]}` : ''
-    ).filter(x=>x).join("<br>");
-}
-function generarInfoExtra(d) {
-    let detalles = [];
-    for (let k in d) {
-        if (["Empresa","Medio de Pago","Importe","Estado","Motivo","Proveedor","Forma de Pago","Fecha Tentativa","Fecha Emisión"].includes(k)) continue;
-        if (d[k]) detalles.push(`<b>${k}:</b> ${d[k]}`);
+function mostrarInfo(idx) {
+    let reg = registrosFiltrados[idx];
+    let detalles = [
+        reg['Detalle'], reg['Motivo'], reg['Proveedor'],
+        reg['Importe'], reg['Forma de Pago'], reg['Fecha Tentativa'],
+        reg['Estado'], reg['Observaciones']
+    ].filter(x => x).join('\n');
+    if (!detalles) {
+        alert("No hay información adicional para este registro.");
+        return;
     }
-    if (detalles.length === 0) return null;
-    return detalles.join('<br>') || 'No hay información adicional para este registro.';
+    alert("Más información sobre el movimiento:\n\n" + detalles);
 }
+
+function actualizarFechaUltima(data) {
+    let fechas = data
+        .map(d => d['Fecha Tentativa'])
+        .filter(f => f)
+        .map(f => new Date(f))
+        .filter(d => !isNaN(d));
+    if (!fechas.length) return;
+    let ultima = fechas.sort((a, b) => b - a)[0];
+    let texto = `${ultima.getDate().toString().padStart(2, '0')}/` +
+        `${(ultima.getMonth() + 1).toString().padStart(2, '0')}/` +
+        `${ultima.getFullYear()}`;
+    document.getElementById('ultimaActualizacion').innerText = texto;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    let data = await cargarDatos();
+    poblarCombos(data);
+    actualizarFechaUltima(data);
+
+    document.getElementById('btnFiltrar').onclick = () => filtrarYMostrar(data);
+});
