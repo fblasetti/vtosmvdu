@@ -1,18 +1,17 @@
 body {
-    background: #161616;
+    background: #171717;
+    font-family: 'Segoe UI', Arial, sans-serif;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-.contenedor {
+.container {
+    max-width: 440px;
     background: #fff;
-    max-width: 500px;
-    margin: 30px auto 30px auto;
-    border-radius: 22px;
-    box-shadow: 0 0 20px #0002;
-    padding: 30px 24px 10px 24px;
-    min-height: 70vh;
+    margin: 36px auto 36px auto;
+    border-radius: 24px;
+    box-shadow: 0 4px 28px rgba(0,0,0,0.18);
+    padding: 32px 18px 24px 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -20,139 +19,146 @@ body {
 
 h1 {
     text-align: center;
-    font-size: 2em;
-    margin-bottom: 8px;
+    margin-top: 0;
+    font-size: 2rem;
+    margin-bottom: 12px;
 }
 
-.fecha-actualizacion {
-    font-size: 1em;
+.actualizacion {
+    font-size: 1rem;
     font-style: italic;
-    color: #777;
+    color: #888;
+    margin-bottom: 12px;
     text-align: center;
-    margin-bottom: 15px;
 }
 
 .formulario {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 16px;
-}
-
-.formulario label {
-    margin-top: 3px;
-}
-
-.formulario select, .formulario button {
-    width: 100%;
-    padding: 7px 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 1.05em;
-}
-
-.formulario button {
-    background: #ececec;
-    font-weight: bold;
-    border: none;
-    margin-top: 10px;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-
-.formulario button:hover {
-    background: #ddd;
-}
-
-.total-pagar {
-    font-size: 1.45em;
-    font-weight: bold;
-    text-align: center;
-    margin: 18px 0 10px 0;
-}
-
-.tabla-contenedor {
-    width: 100%;
-    overflow-x: auto;
+    gap: 6px;
     margin-bottom: 18px;
 }
 
-#tabla-resultados {
+.formulario label {
+    font-size: 1rem;
+    margin-top: 5px;
+}
+
+.formulario select {
+    font-size: 1rem;
+    padding: 6px 4px;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    margin-bottom: 6px;
+}
+
+.formulario button {
+    width: 100%;
+    padding: 10px 0;
+    margin: 10px 0 0 0;
+    font-size: 1.12rem;
+    background: #eee;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.17s;
+}
+
+.formulario button:hover {
+    background: #ffd700;
+    color: #222;
+}
+
+.resultado {
+    width: 100%;
+    margin-top: 4px;
+}
+
+#totalPagar {
+    text-align: center;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+}
+
+.tabla-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.tabla-vencimientos {
     width: 100%;
     border-collapse: collapse;
+    margin: 0 auto;
     background: #fff;
-    border-radius: 12px;
-    overflow: hidden;
-    font-size: 1em;
-    min-width: 340px;
+    font-size: 1rem;
 }
 
-#tabla-resultados th, #tabla-resultados td {
-    padding: 7px 6px;
+.tabla-vencimientos th, .tabla-vencimientos td {
+    border: 1px solid #d3d3d3;
+    padding: 7px 8px;
     text-align: center;
-    border: 1px solid #e4e4e4;
+    font-size: 1rem;
 }
 
-#tabla-resultados th {
+.tabla-vencimientos th {
     background: #f5f5f5;
     font-weight: bold;
+    font-size: 1.04rem;
 }
 
-.fila-pagado {
-    background: #e1ffe6 !important;
+.pagado {
+    background: #d2f8da !important;
 }
 
-.fila-proximo-vencer {
-    background: #fff7cf !important;
+.proximo-vencimiento {
+    background: #fff9c6 !important;
 }
 
 .firma {
     text-align: center;
     color: #888;
-    margin-top: 14px;
-    font-size: 1.05em;
-    padding-bottom: 10px;
+    font-size: 1rem;
+    margin-top: 32px;
+    margin-bottom: 0;
 }
 
-.logo-container {
-    margin-top: 7px;
-}
-
-.logo-firma {
-    max-width: 70px;
-    max-height: 70px;
-    border-radius: 50%;
-    margin: 0 auto 8px auto;
+.logo {
     display: block;
-    box-shadow: 0 0 4px #ddd;
+    margin: 14px auto 0 auto;
+    width: 72px;
+    height: auto;
+    max-width: 100px;
+    border-radius: 100%;
+    box-shadow: 0 3px 14px #0000001a;
 }
 
-@media (max-width: 650px) {
-    .contenedor {
+@media (max-width: 600px) {
+    .container {
         max-width: 98vw;
-        margin: 10px 0;
-        padding: 8px 2vw 5vw 2vw;
-        border-radius: 0 0 16px 16px;
+        min-width: 0;
+        padding: 8vw 2vw 4vw 2vw;
     }
-    .tabla-contenedor {
-        font-size: 0.96em;
+    .logo {
+        width: 52px;
+        max-width: 80px;
+        margin-bottom: 16px;
     }
-    .logo-firma {
-        max-width: 50px;
-        max-height: 50px;
+    .tabla-vencimientos th, .tabla-vencimientos td {
+        font-size: 0.92rem;
+        padding: 6px 2px;
     }
-    .total-pagar {
-        font-size: 1.1em;
+    .firma {
+        font-size: 0.98rem;
     }
 }
 
-@media (max-width: 400px) {
-    .contenedor {
-        padding: 4px 0 2vw 0;
-    }
-    .tabla-contenedor, #tabla-resultados th, #tabla-resultados td {
-        font-size: 0.87em;
-        padding: 4px 2px;
-    }
+::-webkit-scrollbar {
+    width: 8px;
+    background: #eee;
+}
+::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 6px;
 }
