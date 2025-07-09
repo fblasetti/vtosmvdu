@@ -5,50 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Vencimientos</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="images/mi_logo_personal.png">
 </head>
 <body>
-    <div class="contenedor">
+    <div class="container">
         <h1>Consulta de Vencimientos</h1>
-        <div class="fecha-actualizacion" id="fecha-actualizacion">Fecha de Última Actualización de Datos: --/--/----</div>
-
+        <p class="actualizacion" id="fecha-actualizacion">Fecha de Última Actualización de Datos: --/--/----</p>
+        
         <div class="formulario">
             <label for="empresa"><b>Empresa:</b></label>
             <select id="empresa"></select>
 
-            <label for="medio-pago"><b>Medio de Pago:</b></label>
-            <select id="medio-pago"></select>
+            <label for="medioPago"><b>Medio de Pago:</b></label>
+            <select id="medioPago"></select>
 
             <label for="mes"><b>Mes:</b></label>
             <select id="mes"></select>
 
-            <button id="filtrar">¡OK!</button>
+            <button id="btnFiltrar">¡OK!</button>
         </div>
 
-        <div class="total-pagar" id="total-pagar">Total a pagar: $0</div>
-
-        <div class="tabla-contenedor">
-            <table id="tabla-resultados">
-                <thead>
-                    <tr>
-                        <th>Fecha Emisión</th>
-                        <th>Banco</th>
-                        <th>Importe</th>
-                        <th>+ Detalles</th>
-                        <th>+Info</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Aquí van las filas -->
-                </tbody>
-            </table>
-        </div>
-
-        <div class="firma">
-            Hecho por Francisco Javier Blasetti Garcia - Derechos Reservados
-            <div class="logo-container">
-                <img src="images/mi_logo_personal.png" alt="Logo de Francisco Javier Blasetti Garcia" class="logo-firma">
+        <div class="resultado">
+            <h2 id="totalPagar">Total a pagar: $0</h2>
+            <div class="tabla-responsive">
+                <table id="tablaVencimientos" class="tabla-vencimientos">
+                    <thead>
+                        <tr>
+                            <th>Fecha Emisión</th>
+                            <th>Banco</th>
+                            <th>Importe</th>
+                            <th>+ Detalles</th>
+                            <th>+Info</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" style="text-align:center">No se encontraron vencimientos para los filtros seleccionados.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
+
+        <footer>
+            <div class="firma">
+                Hecho por Francisco Javier Blasetti Garcia - Derechos Reservados
+            </div>
+            <img src="images/mi_logo_personal.png" alt="Logo de Francisco Javier Blasetti Garcia" class="logo">
+        </footer>
     </div>
     <script src="script.js"></script>
 </body>
