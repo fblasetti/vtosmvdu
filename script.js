@@ -2,8 +2,11 @@ document.addEventListener("DOMContentLoaded", async function() {
     const SHEET_ID = "1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64";
     const SHEET_NAME = "Hoja 1";
     const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
     let datos = [];
     let fechaUltimaActualizacion = "";
+
+    // Asegúrate de que estos elementos EXISTEN en el HTML:
     const empresaSel = document.getElementById("empresa");
     const medioPagoSel = document.getElementById("medioPago");
     const mesSel = document.getElementById("mes");
@@ -14,6 +17,12 @@ document.addEventListener("DOMContentLoaded", async function() {
     const popup = document.getElementById("popup");
     const popupInfo = document.getElementById("popupInfo");
     const cerrarPopup = document.getElementById("cerrarPopup");
+
+    // Si alguno NO existe, mostrar error y salir.
+    if (!empresaSel || !medioPagoSel || !mesSel || !tablaContainer || !totalDiv || !errorDiv || !fechaActDiv || !popup || !popupInfo || !cerrarPopup) {
+        alert("Error de configuración: revisa los IDs de tu HTML.");
+        return;
+    }
 
     function limpiarSelect(select) {
         select.innerHTML = '<option value="">--</option>';
@@ -57,7 +66,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         try {
             const res = await fetch(SHEET_URL);
             const txt = await res.text();
-            // Extraer JSON entre paréntesis
             const json = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
             const columnas = json.table.cols.map(col => col.label);
             const filas = json.table.rows;
@@ -81,7 +89,6 @@ document.addEventListener("DOMContentLoaded", async function() {
                     estado: (obj["Estado"] || "").toString().trim()
                 }
             });
-
             // Determinar la fecha de última actualización desde "Última actualización" (si existe) o última fila
             let ult = filas[filas.length - 1];
             if (ult && ult.c) {
@@ -101,7 +108,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         limpiarSelect(medioPagoSel);
         limpiarSelect(mesSel);
 
-        // Empresas únicas
         const empresas = Array.from(new Set(datos.map(f => f.empresa).filter(x => x))).sort();
         empresas.forEach(emp => {
             const opt = document.createElement("option");
@@ -110,7 +116,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             empresaSel.appendChild(opt);
         });
 
-        // Medios de pago únicos
         const medios = Array.from(new Set(datos.map(f => f.medioPago).filter(x => x))).sort();
         medios.forEach(m => {
             const opt = document.createElement("option");
@@ -149,8 +154,6 @@ document.addEventListener("DOMContentLoaded", async function() {
             (medioPago === "" || f.medioPago === medioPago) &&
             (mes === "" || f.mes === mes)
         );
-
-        // Excluir los registros vacíos
         filtrados = filtrados.filter(f => f.empresa && f.medioPago && f.mes);
 
         // Calcular el total SOLO de los que NO están pagados
@@ -176,7 +179,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         if (filtrados.length === 0) {
             html += `<tr><td colspan="5">No se encontraron vencimientos para los filtros seleccionados.</td></tr>`;
         } else {
-            // Calcular días al vencimiento para colorear
             const hoy = new Date();
             filtrados.forEach(f => {
                 let clase = "";
@@ -228,7 +230,6 @@ Fecha Tentativa: ${f.fechaTentativa || '-'}<br>
     }
 
     function parseDateDMY(str) {
-        // Soporta "08/07/2025" o "8/7/2025"
         if (!str) return null;
         const parts = str.split("/");
         if (parts.length !== 3) return null;
