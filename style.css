@@ -1,163 +1,158 @@
 body {
-  background: #111;
-  min-height: 100vh;
-  margin: 0;
-  font-family: Arial, sans-serif;
+    background: #161616;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-/* Caja central blanca y redondeada */
 .contenedor {
-  background: #fff;
-  border-radius: 16px;
-  margin: 32px auto;
-  box-shadow: 0 2px 16px 2px rgba(0,0,0,0.2);
-  padding: 32px 24px 24px 24px;
-  width: 100%;
-  max-width: 440px;
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+    background: #fff;
+    max-width: 500px;
+    margin: 30px auto 30px auto;
+    border-radius: 22px;
+    box-shadow: 0 0 20px #0002;
+    padding: 30px 24px 10px 24px;
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-@media (max-width: 600px) {
-  body {
-    font-size: 20px;
-  }
-  .contenedor {
-    margin: 10px auto;
-    padding: 18px 2vw 20px 2vw;
-    max-width: 99vw;
-    min-width: unset;
-    box-shadow: 0 1px 12px 2px rgba(0,0,0,0.16);
-  }
-  select, input, button {
-    font-size: 1.15em;
-    padding: 16px 8px;
-  }
-  th, td {
-    font-size: 1.08em;
-    padding: 10px 4px;
-  }
-  #ver-btn {
-    font-size: 1.18em;
-    padding: 15px 8px;
-  }
-  #popup {
-    font-size: 1.07em;
-    padding: 18px 10px;
-    min-width: 80vw;
-    max-width: 97vw;
-  }
+h1 {
+    text-align: center;
+    font-size: 2em;
+    margin-bottom: 8px;
 }
 
-h2, h3, h4 {
-  text-align: center;
-  margin: 0 0 16px 0;
-  font-weight: bold;
+.fecha-actualizacion {
+    font-size: 1em;
+    font-style: italic;
+    color: #777;
+    text-align: center;
+    margin-bottom: 15px;
 }
 
-label {
-  font-weight: bold;
-  margin-bottom: 2px;
-  display: block;
+.formulario {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
 }
 
-select, input, button {
-  font-size: 1rem;
-  width: 100%;
-  margin: 8px 0;
-  padding: 10px 8px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-  background: #fafafa;
+.formulario label {
+    margin-top: 3px;
 }
 
-#ver-btn {
-  background: #eee;
-  font-weight: bold;
-  transition: background 0.2s;
-  cursor: pointer;
-  border: none;
-  margin-top: 12px;
+.formulario select, .formulario button {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1.05em;
 }
-#ver-btn:hover {
-  background: #c5f7c0;
+
+.formulario button {
+    background: #ececec;
+    font-weight: bold;
+    border: none;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.formulario button:hover {
+    background: #ddd;
 }
 
 .total-pagar {
-  background: #fff;
-  color: #222;
-  padding: 8px 0 8px 0;
-  font-size: 1.15rem;
-  text-align: center;
-  border-radius: 10px;
-  margin-bottom: 8px;
-  font-weight: bold;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.04);
+    font-size: 1.45em;
+    font-weight: bold;
+    text-align: center;
+    margin: 18px 0 10px 0;
 }
 
-#resultado {
-  margin-top: 18px;
-  overflow-x: auto;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 8px;
-  font-size: 1rem;
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-}
-th, td {
-  border: 1px solid #aaa;
-  padding: 6px 4px;
-  text-align: center;
-  background: #fff;
-}
-.detalles {
-  display: none;
-  background: #f8f8f8;
-}
-.detalles.visible {
-  display: table-row;
+.tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 18px;
 }
 
-/* Fila pagada (verde claro) */
-tr.fila-pagado td, tr.fila-pagado {
-  background: #c5f7c0 !important;
+#tabla-resultados {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 1em;
+    min-width: 340px;
 }
 
-/* Fila próxima a vencer (amarillo) */
-tr.fila-amarilla td, tr.fila-amarilla {
-  background: #fffcb2 !important;
+#tabla-resultados th, #tabla-resultados td {
+    padding: 7px 6px;
+    text-align: center;
+    border: 1px solid #e4e4e4;
 }
 
-@media (max-width: 480px) {
-  th, td {
-    font-size: 1.12em;
-    padding: 10px 2px;
-  }
+#tabla-resultados th {
+    background: #f5f5f5;
+    font-weight: bold;
 }
 
-#overlay {
-  position: fixed; left:0; top:0; right:0; bottom:0;
-  background: rgba(0,0,0,0.4);
-  z-index: 20;
-  display: none;
+.fila-pagado {
+    background: #e1ffe6 !important;
 }
-#popup {
-  position: fixed;
-  z-index: 21;
-  background: #fff;
-  border-radius: 10px;
-  max-width: 94vw;
-  min-width: 220px;
-  padding: 22px 18px;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 6px 28px 4px rgba(0,0,0,0.15);
-  display: none;
+
+.fila-proximo-vencer {
+    background: #fff7cf !important;
+}
+
+.firma {
+    text-align: center;
+    color: #888;
+    margin-top: 14px;
+    font-size: 1.05em;
+    padding-bottom: 10px;
+}
+
+.logo-container {
+    margin-top: 7px;
+}
+
+.logo-firma {
+    max-width: 70px;
+    max-height: 70px;
+    border-radius: 50%;
+    margin: 0 auto 8px auto;
+    display: block;
+    box-shadow: 0 0 4px #ddd;
+}
+
+@media (max-width: 650px) {
+    .contenedor {
+        max-width: 98vw;
+        margin: 10px 0;
+        padding: 8px 2vw 5vw 2vw;
+        border-radius: 0 0 16px 16px;
+    }
+    .tabla-contenedor {
+        font-size: 0.96em;
+    }
+    .logo-firma {
+        max-width: 50px;
+        max-height: 50px;
+    }
+    .total-pagar {
+        font-size: 1.1em;
+    }
+}
+
+@media (max-width: 400px) {
+    .contenedor {
+        padding: 4px 0 2vw 0;
+    }
+    .tabla-contenedor, #tabla-resultados th, #tabla-resultados td {
+        font-size: 0.87em;
+        padding: 4px 2px;
+    }
 }
