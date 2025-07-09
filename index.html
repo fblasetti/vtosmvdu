@@ -2,57 +2,42 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Vencimientos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <h1>Consulta de Vencimientos</h1>
-        <p class="fecha-actualizacion">
-            <em>Fecha de Última Actualización de Datos: <span id="fechaActualizacion">--/--/----</span></em>
-        </p>
-        <form id="filtros">
-            <label for="empresa"><b>Empresa:</b></label>
-            <select id="empresa" required></select>
-            <label for="banco"><b>Medio de Pago:</b></label>
-            <select id="banco" required></select>
-            <label for="mes"><b>Mes:</b></label>
-            <select id="mes" required></select>
-            <button type="submit" id="filtrar">¡OK!</button>
-        </form>
-        <div class="resultado">
-            <div id="totalAPagar"><b>Total a pagar: $0</b></div>
-            <div class="tabla-container">
-                <table id="tablaVtos">
-                    <thead>
-                        <tr>
-                            <th>Fecha Emisión</th>
-                            <th>Banco</th>
-                            <th>Importe</th>
-                            <th>+ Detalles</th>
-                            <th>+Info</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaCuerpo"></tbody>
-                </table>
-            </div>
-        </div>
+        <div id="fecha-actualizacion" class="fecha-actualizacion"></div>
+
+        <label for="empresa"><b>Empresa:</b></label>
+        <select id="empresa"></select>
+
+        <label for="medioPago"><b>Medio de Pago:</b></label>
+        <select id="medioPago"></select>
+
+        <label for="mes"><b>Mes:</b></label>
+        <select id="mes"></select>
+
+        <button id="filtrarBtn">¡OK!</button>
+
+        <div id="total" class="total"></div>
+        <div id="tabla-container"></div>
+        <div id="error" class="error"></div>
+
         <footer>
-            <p class="autor">Hecho por Francisco Javier Blasetti Garcia - Derechos Reservados</p>
+            <p>Hecho por Francisco Javier Blasetti Garcia - Derechos Reservados</p>
             <img src="images/mi_logo_personal.png" alt="Logo de Francisco Javier Blasetti Garcia" class="logo">
         </footer>
     </div>
-
-    <!-- Modal para +Info -->
-    <div id="modalInfo" class="modal">
-        <div class="modal-content">
-            <span id="cerrarModal" class="cerrar">&times;</span>
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <span id="cerrarPopup" class="cerrar-popup">&times;</span>
             <h3>Más información sobre el movimiento</h3>
-            <div id="contenidoModal"></div>
+            <div id="popupInfo"></div>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
