@@ -1,5 +1,5 @@
 const SHEET_ID = "1J61L6ZMtU1JEF-T2g8OpBLKZrzIV1DnLY4_YwdFvy64";
-const SHEET_NAME = "Hoja1"; // Cambia si tu hoja no se llama así
+const SHEET_NAME = "Hoja 1"; // Cambia si tu hoja no se llama así
 const SHEET_RANGE = "A1:L100";
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&range=${SHEET_RANGE}`;
 
